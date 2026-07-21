@@ -1,12 +1,19 @@
 {
   "name": "datetime_calc",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Time, date, and basic calculations",
   "intents": [
     {"pattern": "what time", "action": "get_time"},
+    {"pattern": "qué hora", "action": "get_time"},
+    {"pattern": "que hora", "action": "get_time"},
     {"pattern": "what date", "action": "get_date"},
     {"pattern": "what day", "action": "get_date"},
+    {"pattern": "qué fecha", "action": "get_date"},
+    {"pattern": "qué día", "action": "get_date"},
     {"pattern": "calculate", "action": "calculate"},
-    {"pattern": "what is", "action": "calculate"}
+    {"pattern": "calcular", "action": "calculate"},
+    {"pattern": "what is", "action": "calculate"},
+    {"pattern": "cuánto es", "action": "calculate"},
+    {"pattern": "cuanto es", "action": "calculate"}
   ]
 }

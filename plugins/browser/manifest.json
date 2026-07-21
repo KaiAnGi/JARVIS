@@ -1,12 +1,17 @@
 {
   "name": "browser",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Web searches and YouTube",
   "intents": [
     {"pattern": "search", "action": "web_search"},
+    {"pattern": "buscar", "action": "web_search"},
     {"pattern": "google", "action": "web_search"},
     {"pattern": "youtube", "action": "youtube_search"},
     {"pattern": "play on youtube", "action": "youtube_play"},
-    {"pattern": "open website", "action": "open_url"}
+    {"pattern": "reproduce en youtube", "action": "youtube_play"},
+    {"pattern": "reproducir en youtube", "action": "youtube_play"},
+    {"pattern": "open website", "action": "open_url"},
+    {"pattern": "abre sitio web", "action": "open_url"},
+    {"pattern": "abre página", "action": "open_url"}
   ]
 }

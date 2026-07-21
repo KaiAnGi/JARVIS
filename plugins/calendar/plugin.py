@@ -28,7 +28,7 @@ def init(bus):
 def handle(action: str, text: str, bus):
     service = _get_service()
     if service is None:
-        bus.emit("speak", "Calendar not authenticated. Check credentials.json in config/")
+        bus.emit("speak", "Calendar no está autenticado. Verifica credentials.json en config/")
         return
 
     now = datetime.now(timezone.utc)
@@ -40,13 +40,13 @@ def handle(action: str, text: str, bus):
         ).execute()
         events = events_result.get("items", [])
         if not events:
-            bus.emit("speak", "No upcoming events")
+            bus.emit("speak", "No hay eventos próximos")
             return
         summaries = []
         for e in events:
             start = e["start"].get("dateTime", e["start"].get("date"))
-            summaries.append(f"{e['summary']} at {start}")
-        bus.emit("speak", f"Upcoming events: {'; '.join(summaries)}")
+            summaries.append(f"{e['summary']} a las {start}")
+        bus.emit("speak", f"Eventos próximos: {'; '.join(summaries)}")
 
     elif action == "next_event":
         events_result = service.events().list(
@@ -55,11 +55,11 @@ def handle(action: str, text: str, bus):
         ).execute()
         events = events_result.get("items", [])
         if not events:
-            bus.emit("speak", "No upcoming events")
+            bus.emit("speak", "No hay eventos próximos")
             return
         e = events[0]
         start = e["start"].get("dateTime", e["start"].get("date"))
-        bus.emit("speak", f"Next event: {e['summary']} at {start}")
+        bus.emit("speak", f"Próximo evento: {e['summary']} a las {start}")
 
     elif action == "create_event":
-        bus.emit("speak", "Creating events via voice is not yet supported")
+        bus.emit("speak", "Crear eventos por voz aún no está disponible")

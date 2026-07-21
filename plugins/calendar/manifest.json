@@ -1,12 +1,19 @@
 {
   "name": "calendar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Google Calendar events",
   "intents": [
     {"pattern": "what's on my calendar", "action": "list_events"},
+    {"pattern": "qué hay en mi calendario", "action": "list_events"},
     {"pattern": "my schedule", "action": "list_events"},
+    {"pattern": "mi agenda", "action": "list_events"},
     {"pattern": "create event", "action": "create_event"},
+    {"pattern": "crear evento", "action": "create_event"},
     {"pattern": "add to calendar", "action": "create_event"},
-    {"pattern": "what's next", "action": "next_event"}
+    {"pattern": "agregar al calendario", "action": "create_event"},
+    {"pattern": "what's next", "action": "next_event"},
+    {"pattern": "qué sigue", "action": "next_event"},
+    {"pattern": "que sigue", "action": "next_event"},
+    {"pattern": "próximo evento", "action": "next_event"}
   ]
 }

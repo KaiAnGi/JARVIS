@@ -23,6 +23,12 @@ class Speaker:
             voice = win32com.client.Dispatch("SAPI.SpVoice")
             voice.Rate = self._rate
             voice.Volume = int(self._volume * 100)
+            voices = voice.GetVoices()
+            for i in range(voices.Count):
+                v = voices.Item(i)
+                if "Spanish" in v.GetDescription() or "español" in v.GetDescription().lower():
+                    voice.Voice = v
+                    break
             while True:
                 text = self._queue.get()
                 if text is None:
