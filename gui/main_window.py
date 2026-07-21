@@ -16,9 +16,13 @@ from gui.widgets import ArcReactor, StatusIndicator
 
 
 class VoiceThread(QThread):
-    """Background thread for voice processing."""
+    """Background thread for voice processing with session mode."""
     speech_detected = pyqtSignal(str)
     wake_detected = pyqtSignal(str)
+    session_started = pyqtSignal()
+    session_ended = pyqtSignal()
+
+    GOODBYE_PHRASES = ["goodbye jarvis", "bye jarvis", "exit jarvis", "close jarvis", "adios jarvis"]
 
     def __init__(self, recognizer, wake_detector, router, bus):
         super().__init__()
@@ -27,28 +31,41 @@ class VoiceThread(QThread):
         self.router = router
         self.bus = bus
         self._running = True
-        self._listening = False
+        self._in_session = False
 
     def run(self):
         import time
         while self._running:
+            # STANDBY: listen for wake word
+            self._in_session = False
             self.wake_detector.start_listening()
-            while self._running:
+            while self._running and not self._in_session:
                 wake_word = self.wake_detector.check()
                 if wake_word:
                     self.wake_detector.stop_listening()
+                    self._in_session = True
+                    self.session_started.emit()
                     self.wake_detected.emit(wake_word)
-                    self._listening = True
-                    text = self.recognizer.listen_once()
-                    if text:
-                        self.speech_detected.emit(text)
-                    self._listening = False
                     break
                 time.sleep(0.05)
+
+            # SESSION: listen for commands until goodbye
+            while self._running and self._in_session:
+                text = self.recognizer.listen_once()
+                if not text:
+                    continue
+                lower = text.lower().strip()
+                if any(phrase in lower for phrase in self.GOODBYE_PHRASES):
+                    self.session_ended.emit()
+                    self._in_session = False
+                    break
+                self.speech_detected.emit(text)
+
             time.sleep(0.1)
 
     def stop(self):
         self._running = False
+        self._in_session = False
         self.wake_detector.stop_listening()
         self.wait()
 
@@ -220,20 +237,33 @@ class JarvisWindow(QMainWindow):
         )
         self.voice_thread.wake_detected.connect(self._on_wake)
         self.voice_thread.speech_detected.connect(self._on_speech)
+        self.voice_thread.session_started.connect(self._on_session_start)
+        self.voice_thread.session_ended.connect(self._on_session_end)
         self.voice_thread.start()
         self.status_wake.set_active(True)
 
-    def _on_wake(self, wake_word):
+    def _on_session_start(self):
         self.arc_reactor.set_listening(True)
         self.status_stt.set_active(True)
-        self._log("SYSTEM", f"Wake word detected: {wake_word}")
+        self.status_wake.set_active(False)
+        self._log("SYSTEM", "Session active — speak your commands")
         self.speaker.speak("Yes?")
+
+    def _on_session_end(self):
+        self.arc_reactor.set_listening(False)
+        self.status_stt.set_active(False)
+        self.status_wake.set_active(True)
+        self._log("SYSTEM", "Session ended — say 'Hey Jarvis' to reactivate")
+        self.speaker.speak("Goodbye")
+
+    def _on_wake(self, wake_word):
+        pass
 
     def _on_speech(self, text):
         self._log("YOU", text)
-        self.arc_reactor.set_listening(False)
-        self.status_stt.set_active(False)
+        self.status_router.set_active(True)
         self.router.route(text, self.bus)
+        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
 
     def closeEvent(self, event):
         if self.voice_thread:
