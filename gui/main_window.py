@@ -265,6 +265,9 @@ class JarvisWindow(QMainWindow):
         self.status_wake.set_active(True)
 
     def _on_session_start(self):
+        self.showNormal()
+        self.activateWindow()
+        self.raise_()
         self.arc_reactor.set_listening(True)
         self.status_stt.set_active(True)
         self.status_wake.set_active(False)

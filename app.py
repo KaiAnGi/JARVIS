@@ -31,9 +31,10 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("J.A.R.V.I.S.")
 
-    # Window
+    # Window — start hidden, appears on wake word
     window = JarvisWindow(recognizer, wake_detector, router, bus, speaker)
-    window.show()
+    window.showMinimized()
+    window.hide()
 
     # Start wake word in background
     window.start_voice_thread()
