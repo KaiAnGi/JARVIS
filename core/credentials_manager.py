@@ -1,6 +1,5 @@
 """Shared OAuth2 credential management for Google APIs."""
 
-import json
 from pathlib import Path
 
 from google.auth.transport.requests import Request
@@ -11,22 +10,41 @@ CONFIG_DIR = Path(__file__).parent.parent / "config"
 CREDENTIALS_FILE = CONFIG_DIR / "credentials.json"
 TOKEN_FILE = CONFIG_DIR / "token.json"
 
+ALL_SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/calendar",
+]
 
-def get_credentials(scopes: list[str]) -> Credentials | None:
+
+def get_credentials(scopes: list[str] = None) -> Credentials | None:
+    scopes = ALL_SCOPES
     creds = None
     if TOKEN_FILE.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), scopes)
+        try:
+            creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), scopes)
+        except Exception:
+            creds = None
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception:
+                creds = None
+        if not creds:
             if not CREDENTIALS_FILE.exists():
                 print("[AUTH] credentials.json not found in config/")
-                print("[AUTH] Download from Google Cloud Console and place it there")
                 return None
-            flow = InstalledAppFlow.from_client_secrets_file(
-                str(CREDENTIALS_FILE), scopes
-            )
-            creds = flow.run_local_server(port=0)
-        TOKEN_FILE.write_text(creds.to_json())
+            try:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    str(CREDENTIALS_FILE), scopes
+                )
+                creds = flow.run_local_server(port=0)
+            except Exception as e:
+                print(f"[AUTH] OAuth flow failed: {e}")
+                return None
+        try:
+            TOKEN_FILE.write_text(creds.to_json())
+        except Exception:
+            pass
     return creds

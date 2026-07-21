@@ -19,7 +19,11 @@ def _get_service():
         creds = get_credentials(SCOPES)
         if creds is None:
             return None
-        _service = build("gmail", "v1", credentials=creds)
+        try:
+            _service = build("gmail", "v1", credentials=creds)
+        except Exception as e:
+            print(f"[GMAIL] Failed to build service: {e}")
+            return None
     return _service
 
 
@@ -28,6 +32,14 @@ def init(bus):
 
 
 def handle(action: str, text: str, bus):
+    try:
+        _handle(action, text, bus)
+    except Exception as e:
+        print(f"[GMAIL] Error: {e}")
+        bus.emit("speak", resp("gmail_auth"))
+
+
+def _handle(action: str, text: str, bus):
     service = _get_service()
     if service is None:
         bus.emit("speak", resp("gmail_auth"))

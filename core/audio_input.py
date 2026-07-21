@@ -2,6 +2,7 @@
 
 import json
 import sys
+import threading
 from pathlib import Path
 
 import pyaudio
@@ -22,6 +23,7 @@ class SpeechRecognizer:
         self._pa = pyaudio.PyAudio()
         self._stream = None
         self._rec = None
+        self._lock = threading.Lock()
 
     def _load_model(self, name: str) -> Model:
         path = self.MODEL_DIR / name
@@ -33,9 +35,9 @@ class SpeechRecognizer:
         return Model(str(path))
 
     def switch_language(self):
-        """Reload the Vosk model for the current language."""
-        self.stop()
-        self.model = self._load_model(MODELS[get_lang()])
+        with self._lock:
+            self.stop()
+            self.model = self._load_model(MODELS[get_lang()])
 
     def _open_stream(self):
         if self._stream is None:
@@ -50,25 +52,18 @@ class SpeechRecognizer:
 
     def listen_once(self) -> str:
         """Block until a complete utterance is recognized, then return text."""
-        self._open_stream()
+        with self._lock:
+            self._open_stream()
         while True:
-            data = self._stream.read(4096, exception_on_overflow=False)
-            if self._rec.AcceptWaveform(data):
-                result = json.loads(self._rec.Result())
-                text = result.get("text", "").strip()
-                if text:
-                    return text
-
-    def listen_continuous(self, callback, stop_event=None):
-        """Stream audio forever, calling callback(text) per utterance."""
-        self._open_stream()
-        while stop_event is None or not stop_event.is_set():
-            data = self._stream.read(4096, exception_on_overflow=False)
-            if self._rec.AcceptWaveform(data):
-                result = json.loads(self._rec.Result())
-                text = result.get("text", "").strip()
-                if text:
-                    callback(text)
+            with self._lock:
+                if self._stream is None:
+                    return ""
+                data = self._stream.read(4096, exception_on_overflow=False)
+                if self._rec.AcceptWaveform(data):
+                    result = json.loads(self._rec.Result())
+                    text = result.get("text", "").strip()
+                    if text:
+                        return text
 
     def stop(self):
         if self._stream:
