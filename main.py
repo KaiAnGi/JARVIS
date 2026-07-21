@@ -1,12 +1,14 @@
 """Jarvis Voice Assistant - Entry point."""
 
 import threading
+import time
 
 from core.event_bus import EventBus
 from core.audio_input import SpeechRecognizer
 from core.audio_output import Speaker
 from core.intent_router import IntentRouter
 from core.plugin_loader import load_plugins
+from core.wake_word import WakeWordDetector
 
 
 def main():
@@ -19,6 +21,7 @@ def main():
     load_plugins(bus, router)
 
     recognizer = SpeechRecognizer()
+    wake_detector = WakeWordDetector(wake_words=["hey_jarvis"], threshold=0.5)
 
     stop = threading.Event()
 
@@ -27,13 +30,28 @@ def main():
         if not router.route(text, bus):
             print("(no matching command)")
 
-    print("Jarvis ready. Say something (Ctrl+C to quit).")
+    print("Loading wake word model...")
+    wake_detector.load()
+
+    print("Jarvis ready. Say 'Hey Jarvis' to activate (Ctrl+C to quit).")
     try:
-        recognizer.listen_continuous(on_speech, stop_event=stop)
+        while not stop.is_set():
+            wake_detector.start_listening()
+            while not stop.is_set():
+                wake_word = wake_detector.check()
+                if wake_word:
+                    wake_detector.stop_listening()
+                    print(f"[WAKE] Detected: {wake_word}")
+                    speaker.speak("Yes?")
+                    time.sleep(0.5)
+                    recognizer.listen_once(on_speech)
+                    break
+            time.sleep(0.1)
     except KeyboardInterrupt:
         print("\nShutting down...")
         stop.set()
     finally:
+        wake_detector.stop_listening()
         recognizer.cleanup()
         speaker.shutdown()
 
