@@ -1,33 +1,27 @@
-"""Main Jarvis HUD window."""
+"""Floating Spotlight-style Jarvis interface."""
 
-from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QPropertyAnimation, QEasingCurve, QRect
+from PyQt6.QtGui import QFont, QColor, QPainter, QPainterPath, QBrush, QPen, QKeyEvent
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QTextEdit, QPushButton, QFrame,
+    QWidget, QLineEdit, QTextEdit, QLabel, QHBoxLayout,
+    QVBoxLayout, QGraphicsDropShadowEffect, QApplication
 )
 
-from gui.styles import (
-    PRIMARY_COLOR, SECONDARY_COLOR, BG_DARK, BG_PANEL,
-    MAIN_STYLESHEET, PANEL_STYLE, BUTTON_STYLE, INPUT_STYLE, LOG_STYLE
-)
-from gui.widgets import ArcReactor, StatusIndicator
-from core.language import ui, toggle_lang, is_goodbye, set_lang
+from gui.styles import PRIMARY_COLOR, SECONDARY_COLOR, BG_DARK, BG_PANEL
+from gui.widgets import ArcReactor
+from core.language import ui, toggle_lang, is_goodbye, get_lang
 
 
 class VoiceThread(QThread):
-    """Background thread for voice processing with session mode."""
     speech_detected = pyqtSignal(str)
     wake_detected = pyqtSignal(str)
     session_started = pyqtSignal()
     session_ended = pyqtSignal()
 
-    def __init__(self, recognizer, wake_detector, router, bus):
+    def __init__(self, recognizer, wake_detector):
         super().__init__()
         self.recognizer = recognizer
         self.wake_detector = wake_detector
-        self.router = router
-        self.bus = bus
         self._running = True
         self._in_session = False
 
@@ -42,7 +36,6 @@ class VoiceThread(QThread):
                     self.wake_detector.stop_listening()
                     self._in_session = True
                     self.session_started.emit()
-                    self.wake_detected.emit(wake_word)
                     break
                 time.sleep(0.05)
 
@@ -65,8 +58,12 @@ class VoiceThread(QThread):
         self.wait()
 
 
-class JarvisWindow(QMainWindow):
-    """Main HUD window styled like Iron Man's interface."""
+class FloatingJarvis(QWidget):
+    """Spotlight-style floating search bar."""
+
+    WIDTH = 620
+    HEIGHT_COLLAPSED = 60
+    HEIGHT_EXPANDED = 380
 
     def __init__(self, recognizer, wake_detector, router, bus, speaker):
         super().__init__()
@@ -76,221 +73,281 @@ class JarvisWindow(QMainWindow):
         self.bus = bus
         self.speaker = speaker
         self.voice_thread = None
+        self._expanded = False
 
-        self.setMinimumSize(900, 650)
-        self.setStyleSheet(MAIN_STYLESHEET)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.Tool
+        )
+        Qt.WindowType.WindowTransparentForInput
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, False)
 
+        self.setFixedWidth(self.WIDTH)
+        self.setFixedHeight(self.HEIGHT_COLLAPSED)
+
+        self._center_on_screen()
         self._init_ui()
         self._connect_signals()
+        self._init_animations()
+
+    def _center_on_screen(self):
+        screen = QApplication.primaryScreen().geometry()
+        x = (screen.width() - self.WIDTH) // 2
+        y = int(screen.height() * 0.25)
+        self.move(x, y)
 
     def _init_ui(self):
-        central = QWidget()
-        self.setCentralWidget(central)
-        main_layout = QHBoxLayout(central)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(20)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        # Left panel - Arc Reactor + Status
-        left_panel = QFrame()
-        left_panel.setStyleSheet(PANEL_STYLE)
-        left_panel.setFixedWidth(280)
-        left_layout = QVBoxLayout(left_panel)
-        left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Main container
+        self.container = QWidget()
+        self.container.setObjectName("container")
+        self.container.setStyleSheet(f"""
+            #container {{
+                background-color: rgba(12, 12, 20, 230);
+                border: 1px solid {PRIMARY_COLOR}40;
+                border-radius: 16px;
+            }}
+        """)
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(16, 12, 16, 12)
+        container_layout.setSpacing(8)
 
-        self.arc_reactor = ArcReactor(size=200)
-        left_layout.addWidget(self.arc_reactor, alignment=Qt.AlignmentFlag.AlignCenter)
+        # Top row: input + lang button
+        top_row = QHBoxLayout()
+        top_row.setSpacing(10)
 
-        status_frame = QFrame()
-        status_frame.setStyleSheet("background: transparent; border: none;")
-        status_layout = QVBoxLayout(status_frame)
-        status_layout.setContentsMargins(20, 10, 20, 10)
-
-        self.status_wake = StatusIndicator("Wake Word", PRIMARY_COLOR)
-        self.status_stt = StatusIndicator("Speech-to-Text", SECONDARY_COLOR)
-        self.status_router = StatusIndicator("Intent Router", "#00FF88")
-        self.status_tts = StatusIndicator("Text-to-Speech", "#FF4444")
-
-        status_layout.addWidget(self.status_wake)
-        status_layout.addWidget(self.status_stt)
-        status_layout.addWidget(self.status_router)
-        status_layout.addWidget(self.status_tts)
-
-        left_layout.addWidget(status_frame)
-        left_layout.addStretch()
-
-        version_label = QLabel("v1.1.0")
-        version_label.setStyleSheet(f"color: {PRIMARY_COLOR}60; font-size: 11px;")
-        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        left_layout.addWidget(version_label)
-
-        main_layout.addWidget(left_panel)
-
-        # Right panel - Chat + Input
-        right_panel = QFrame()
-        right_panel.setStyleSheet(PANEL_STYLE)
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(16, 16, 16, 16)
-
-        # Header row with language toggle
-        header_row = QHBoxLayout()
-        header_row.setContentsMargins(0, 0, 0, 0)
-
-        self.header = QLabel(ui("header"))
-        self.header.setFont(QFont("Consolas", 20, QFont.Weight.Bold))
-        self.header.setStyleSheet(f"color: {PRIMARY_COLOR}; background: transparent;")
-        self.header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        header_row.addWidget(self.header)
-
-        self.lang_btn = QPushButton(ui("lang_btn"))
-        self.lang_btn.setStyleSheet(
-            f"QPushButton {{ background-color: {PRIMARY_COLOR}30; border: 1px solid {PRIMARY_COLOR}80; "
-            f"border-radius: 12px; color: {PRIMARY_COLOR}; font-size: 12px; font-weight: bold; "
-            f"padding: 4px 10px; min-width: 36px; }}"
-            f"QPushButton:hover {{ background-color: {PRIMARY_COLOR}50; }}"
-        )
-        self.lang_btn.setFixedWidth(40)
-        self.lang_btn.clicked.connect(self._toggle_language)
-        header_row.addWidget(self.lang_btn, alignment=Qt.AlignmentFlag.AlignRight)
-
-        right_layout.addLayout(header_row)
-
-        self.subtitle = QLabel(ui("subtitle"))
-        self.subtitle.setStyleSheet(f"color: {SECONDARY_COLOR}80; font-size: 11px; background: transparent;")
-        self.subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        right_layout.addWidget(self.subtitle)
-
-        self.log_area = QTextEdit()
-        self.log_area.setReadOnly(True)
-        self.log_area.setStyleSheet(LOG_STYLE)
-        right_layout.addWidget(self.log_area, stretch=1)
-
-        input_frame = QFrame()
-        input_frame.setStyleSheet("background: transparent; border: none;")
-        input_layout = QHBoxLayout(input_frame)
-        input_layout.setContentsMargins(0, 0, 0, 0)
+        # Arc reactor (small)
+        self.arc_reactor = ArcReactor(size=36)
+        self.arc_reactor.setFixedSize(36, 36)
+        top_row.addWidget(self.arc_reactor)
 
         self.text_input = QLineEdit()
         self.text_input.setPlaceholderText(ui("placeholder"))
-        self.text_input.setStyleSheet(INPUT_STYLE)
-        self.text_input.returnPressed.connect(self._on_text_submit)
-        input_layout.addWidget(self.text_input)
+        self.text_input.setStyleSheet(f"""
+            QLineEdit {{
+                background: transparent;
+                border: none;
+                color: #E0E0E0;
+                font-size: 16px;
+                font-family: 'Segoe UI', sans-serif;
+                padding: 4px 0;
+            }}
+            QLineEdit::placeholder {{
+                color: #666666;
+            }}
+        """)
+        self.text_input.returnPressed.connect(self._on_submit)
+        top_row.addWidget(self.text_input, stretch=1)
 
-        self.send_btn = QPushButton(ui("send"))
-        self.send_btn.setStyleSheet(BUTTON_STYLE)
-        self.send_btn.setFixedWidth(100)
-        self.send_btn.clicked.connect(self._on_text_submit)
-        input_layout.addWidget(self.send_btn)
+        self.lang_btn = QLabel(ui("lang_btn"))
+        self.lang_btn.setFixedSize(32, 32)
+        self.lang_btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lang_btn.setStyleSheet(f"""
+            QLabel {{
+                color: {PRIMARY_COLOR};
+                font-size: 11px;
+                font-weight: bold;
+                border: 1px solid {PRIMARY_COLOR}60;
+                border-radius: 10px;
+                background: {PRIMARY_COLOR}15;
+            }}
+            QLabel:hover {{
+                background: {PRIMARY_COLOR}30;
+            }}
+        """)
+        self.lang_btn.mousePressEvent = lambda _: self._toggle_language()
+        top_row.addWidget(self.lang_btn)
 
-        right_layout.addWidget(input_frame)
+        container_layout.addLayout(top_row)
 
-        btn_frame = QFrame()
-        btn_frame.setStyleSheet("background: transparent; border: none;")
-        btn_layout = QHBoxLayout(btn_frame)
+        # Log area (hidden initially)
+        self.log_area = QTextEdit()
+        self.log_area.setReadOnly(True)
+        self.log_area.setStyleSheet(f"""
+            QTextEdit {{
+                background: transparent;
+                border: none;
+                color: {SECONDARY_COLOR};
+                font-family: 'Consolas', monospace;
+                font-size: 12px;
+                padding: 4px 0;
+            }}
+            QScrollBar:vertical {{
+                width: 4px;
+                background: transparent;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {PRIMARY_COLOR}30;
+                border-radius: 2px;
+                min-height: 20px;
+            }}
+        """)
+        self.log_area.setVisible(False)
+        container_layout.addWidget(self.log_area, stretch=1)
 
-        self.listen_btn = QPushButton(ui("activate"))
-        self.listen_btn.setStyleSheet(BUTTON_STYLE)
-        self.listen_btn.clicked.connect(self._on_manual_listen)
-        btn_layout.addWidget(self.listen_btn)
+        layout.addWidget(self.container)
 
-        self.clear_btn = QPushButton(ui("clear"))
-        self.clear_btn.setStyleSheet(BUTTON_STYLE)
-        self.clear_btn.clicked.connect(lambda: self.log_area.clear())
-        btn_layout.addWidget(self.clear_btn)
-
-        right_layout.addWidget(btn_frame)
-
-        main_layout.addWidget(right_panel, stretch=1)
+        # Shadow
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(40)
+        shadow.setColor(QColor(PRIMARY_COLOR + "60"))
+        shadow.setOffset(0, 4)
+        self.container.setGraphicsEffect(shadow)
 
     def _connect_signals(self):
         self.bus.subscribe("speak", lambda text: self._log("JARVIS", text))
         self.bus.subscribe("speak", lambda text: self.speaker.speak(text))
 
+    def _init_animations(self):
+        self._show_anim = QPropertyAnimation(self, b"geometry")
+        self._show_anim.setDuration(200)
+        self._show_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self._hide_anim = QPropertyAnimation(self, b"geometry")
+        self._hide_anim.setDuration(180)
+        self._hide_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+        self._hide_anim.finished.connect(self.hide)
+
     def _log(self, sender: str, text: str):
         color = PRIMARY_COLOR if sender == "JARVIS" else SECONDARY_COLOR
         self.log_area.append(f'<span style="color:{color}">[{sender}]</span> {text}')
+
+    def _on_submit(self):
+        text = self.text_input.text().strip()
+        if not text:
+            return
+        self.text_input.clear()
+        self._log("YOU", text)
+        self.router.route(text, self.bus)
 
     def _toggle_language(self):
         new_lang = toggle_lang()
         self.recognizer.switch_language()
         self.speaker.switch_language()
         self.router.rebuild_patterns()
-        self._refresh_ui()
+        self.text_input.setPlaceholderText(ui("placeholder"))
+        self.lang_btn.setText(ui("lang_btn"))
         self._log("SYSTEM", f"{'Idioma: Español' if new_lang == 'es' else 'Language: English'}")
 
-    def _refresh_ui(self):
-        self.setWindowTitle(ui("window_title"))
-        self.header.setText(ui("header"))
-        self.subtitle.setText(ui("subtitle"))
-        self.text_input.setPlaceholderText(ui("placeholder"))
-        self.send_btn.setText(ui("send"))
-        self.listen_btn.setText(ui("activate"))
-        self.clear_btn.setText(ui("clear"))
-        self.lang_btn.setText(ui("lang_btn"))
-
-    def _on_text_submit(self):
-        text = self.text_input.text().strip()
-        if not text:
-            return
+    def show_with_animation(self):
+        """Show the floating bar with animation."""
         self.text_input.clear()
-        self._log("YOU", text)
-        self.status_router.set_active(True)
-        self.router.route(text, self.bus)
-        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
+        self.show()
+        self.raise_()
+        self.activateWindow()
+        self.text_input.setFocus()
 
-    def _on_manual_listen(self):
-        self.arc_reactor.set_listening(True)
-        self.status_stt.set_active(True)
-        self._log("SYSTEM", ui("listening"))
+        screen = QApplication.primaryScreen().geometry()
+        x = (screen.width() - self.WIDTH) // 2
+        y = int(screen.height() * 0.25)
 
-        def listen_in_thread():
-            text = self.recognizer.listen_once()
-            if text:
-                self._log("YOU", text)
-                self.router.route(text, self.bus)
-            self.arc_reactor.set_listening(False)
-            self.status_stt.set_active(False)
+        start_rect = QRect(x, y + 20, self.WIDTH, self.HEIGHT_COLLAPSED)
+        end_rect = QRect(x, y, self.WIDTH, self.HEIGHT_COLLAPSED)
 
-        thread = QThread(target=listen_in_thread)
-        thread.start()
+        self.setGeometry(start_rect)
+        self._show_anim.setStartValue(start_rect)
+        self._show_anim.setEndValue(end_rect)
+        self._show_anim.start()
+
+    def hide_with_animation(self):
+        """Hide the floating bar with animation."""
+        rect = self.geometry()
+        end_rect = QRect(rect.x(), rect.y() + 20, rect.width(), rect.height())
+        self._hide_anim.setStartValue(rect)
+        self._hide_anim.setEndValue(end_rect)
+        self._hide_anim.start()
+
+    def expand(self):
+        """Expand to show log area."""
+        if self._expanded:
+            return
+        self._expanded = True
+        self.log_area.setVisible(True)
+        screen = QApplication.primaryScreen().geometry()
+        x = (screen.width() - self.WIDTH) // 2
+        y = int(screen.height() * 0.25)
+
+        anim = QPropertyAnimation(self, b"geometry")
+        anim.setDuration(200)
+        anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        anim.setStartValue(self.geometry())
+        anim.setEndValue(QRect(x, y, self.WIDTH, self.HEIGHT_EXPANDED))
+        anim.start()
+        self._expand_anim = anim
+
+    def collapse(self):
+        """Collapse to hide log area."""
+        if not self._expanded:
+            return
+        self._expanded = False
+        screen = QApplication.primaryScreen().geometry()
+        x = (screen.width() - self.WIDTH) // 2
+        y = int(screen.height() * 0.25)
+
+        anim = QPropertyAnimation(self, b"geometry")
+        anim.setDuration(200)
+        anim.setEasingCurve(QEasingCurve.Type.InCubic)
+        anim.setStartValue(self.geometry())
+        anim.setEndValue(QRect(x, y, self.WIDTH, self.HEIGHT_COLLAPSED))
+        anim.finished.connect(lambda: self.log_area.setVisible(False))
+        anim.start()
+        self._expand_anim = anim
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Escape:
+            if self._expanded:
+                self.collapse()
+            else:
+                self.hide_with_animation()
+        elif event.key() == Qt.Key.Key_Down and not self._expanded:
+            self.expand()
+        elif event.key() == Qt.Key.Key_Up and self._expanded:
+            self.collapse()
+        else:
+            super().keyPressEvent(event)
 
     def start_voice_thread(self):
-        self.voice_thread = VoiceThread(
-            self.recognizer, self.wake_detector, self.router, self.bus
-        )
-        self.voice_thread.wake_detected.connect(self._on_wake)
-        self.voice_thread.speech_detected.connect(self._on_speech)
+        self.voice_thread = VoiceThread(self.recognizer, self.wake_detector)
         self.voice_thread.session_started.connect(self._on_session_start)
         self.voice_thread.session_ended.connect(self._on_session_end)
+        self.voice_thread.speech_detected.connect(self._on_speech)
         self.voice_thread.start()
-        self.status_wake.set_active(True)
 
     def _on_session_start(self):
-        self.showNormal()
-        self.activateWindow()
-        self.raise_()
+        self.show_with_animation()
+        QTimer.singleShot(100, self.expand)
         self.arc_reactor.set_listening(True)
-        self.status_stt.set_active(True)
-        self.status_wake.set_active(False)
         self._log("SYSTEM", ui("session_active"))
         self.speaker.speak(ui("yes"))
 
     def _on_session_end(self):
         self.arc_reactor.set_listening(False)
-        self.status_stt.set_active(False)
-        self.status_wake.set_active(True)
         self._log("SYSTEM", ui("session_ended"))
         self.speaker.speak(ui("goodbye"))
-
-    def _on_wake(self, wake_word):
-        pass
+        QTimer.singleShot(2000, self.hide_with_animation)
 
     def _on_speech(self, text):
         self._log("YOU", text)
-        self.status_router.set_active(True)
         self.router.route(text, self.bus)
-        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
 
-    def closeEvent(self, event):
-        if self.voice_thread:
-            self.voice_thread.stop()
-        event.accept()
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+
+    def mouseMoveEvent(self, event):
+        if hasattr(self, 'drag_pos') and event.buttons() & Qt.MouseButton.LeftButton:
+            self.move(event.globalPosition().toPoint() - self.drag_pos)
+
+    def paintEvent(self, event):
+        """Draw rounded rect background."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(self.rect(), 16, 16)
+        painter.fillPath(path, QBrush(QColor(0, 0, 0, 0)))
+        painter.end()
