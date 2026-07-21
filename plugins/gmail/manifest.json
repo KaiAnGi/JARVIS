@@ -1,0 +1,11 @@
+{
+  "name": "gmail",
+  "version": "1.0.0",
+  "description": "Read and send emails via Gmail API",
+  "intents": [
+    {"pattern": "check email", "action": "check_email"},
+    {"pattern": "read email", "action": "read_email"},
+    {"pattern": "send email", "action": "send_email"},
+    {"pattern": "how many emails", "action": "count_email"}
+  ]
+}

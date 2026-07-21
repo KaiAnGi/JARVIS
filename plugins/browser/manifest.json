@@ -1,0 +1,12 @@
+{
+  "name": "browser",
+  "version": "1.0.0",
+  "description": "Web searches and YouTube",
+  "intents": [
+    {"pattern": "search", "action": "web_search"},
+    {"pattern": "google", "action": "web_search"},
+    {"pattern": "youtube", "action": "youtube_search"},
+    {"pattern": "play on youtube", "action": "youtube_play"},
+    {"pattern": "open website", "action": "open_url"}
+  ]
+}

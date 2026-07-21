@@ -1,0 +1,11 @@
+{
+  "name": "vscode_control",
+  "version": "1.0.0",
+  "description": "Open projects and control VS Code",
+  "intents": [
+    {"pattern": "open project", "action": "open_project"},
+    {"pattern": "open vscode", "action": "open_vscode"},
+    {"pattern": "open file", "action": "open_file"},
+    {"pattern": "run task", "action": "run_task"}
+  ]
+}

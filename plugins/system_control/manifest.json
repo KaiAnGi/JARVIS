@@ -1,0 +1,13 @@
+{
+  "name": "system_control",
+  "version": "1.0.0",
+  "description": "Open apps, manage windows, file explorer",
+  "intents": [
+    {"pattern": "open", "action": "open_app"},
+    {"pattern": "launch", "action": "open_app"},
+    {"pattern": "minimize", "action": "minimize_window"},
+    {"pattern": "maximize", "action": "maximize_window"},
+    {"pattern": "close window", "action": "close_window"},
+    {"pattern": "open explorer", "action": "open_explorer"}
+  ]
+}

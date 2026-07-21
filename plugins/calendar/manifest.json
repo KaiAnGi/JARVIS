@@ -1,0 +1,12 @@
+{
+  "name": "calendar",
+  "version": "1.0.0",
+  "description": "Google Calendar events",
+  "intents": [
+    {"pattern": "what's on my calendar", "action": "list_events"},
+    {"pattern": "my schedule", "action": "list_events"},
+    {"pattern": "create event", "action": "create_event"},
+    {"pattern": "add to calendar", "action": "create_event"},
+    {"pattern": "what's next", "action": "next_event"}
+  ]
+}

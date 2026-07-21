@@ -1,0 +1,12 @@
+{
+  "name": "datetime_calc",
+  "version": "1.0.0",
+  "description": "Time, date, and basic calculations",
+  "intents": [
+    {"pattern": "what time", "action": "get_time"},
+    {"pattern": "what date", "action": "get_date"},
+    {"pattern": "what day", "action": "get_date"},
+    {"pattern": "calculate", "action": "calculate"},
+    {"pattern": "what is", "action": "calculate"}
+  ]
+}
