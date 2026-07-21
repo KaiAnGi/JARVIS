@@ -22,7 +22,8 @@ class VoiceThread(QThread):
     session_started = pyqtSignal()
     session_ended = pyqtSignal()
 
-    GOODBYE_PHRASES = ["goodbye jarvis", "bye jarvis", "exit jarvis", "close jarvis", "adios jarvis"]
+    GOODBYE_PHRASES = ["goodbye jarvis", "bye jarvis", "exit jarvis", "close jarvis",
+                        "adiós jarvis", "adios jarvis", "hasta luego jarvis", "chao jarvis"]
 
     def __init__(self, recognizer, wake_detector, router, bus):
         super().__init__()
@@ -165,7 +166,7 @@ class JarvisWindow(QMainWindow):
         input_layout.setContentsMargins(0, 0, 0, 0)
 
         self.text_input = QLineEdit()
-        self.text_input.setPlaceholderText("Type a command or say 'Hey Jarvis'...")
+        self.text_input.setPlaceholderText("Escribe un comando o di 'Hey Jarvis'...")
         self.text_input.setStyleSheet(INPUT_STYLE)
         self.text_input.returnPressed.connect(self._on_text_submit)
         input_layout.addWidget(self.text_input)
@@ -218,7 +219,7 @@ class JarvisWindow(QMainWindow):
     def _on_manual_listen(self):
         self.arc_reactor.set_listening(True)
         self.status_stt.set_active(True)
-        self._log("SYSTEM", "Listening...")
+        self._log("SYSTEM", "Escuchando...")
 
         def listen_in_thread():
             text = self.recognizer.listen_once()
@@ -246,15 +247,15 @@ class JarvisWindow(QMainWindow):
         self.arc_reactor.set_listening(True)
         self.status_stt.set_active(True)
         self.status_wake.set_active(False)
-        self._log("SYSTEM", "Session active — speak your commands")
-        self.speaker.speak("Yes?")
+        self._log("SYSTEM", "Sesión activa — habla tus comandos")
+        self.speaker.speak("¿Sí?")
 
     def _on_session_end(self):
         self.arc_reactor.set_listening(False)
         self.status_stt.set_active(False)
         self.status_wake.set_active(True)
-        self._log("SYSTEM", "Session ended — say 'Hey Jarvis' to reactivate")
-        self.speaker.speak("Goodbye")
+        self._log("SYSTEM", "Sesión terminada — di 'Hey Jarvis' para reactivar")
+        self.speaker.speak("Adiós")
 
     def _on_wake(self, wake_word):
         pass

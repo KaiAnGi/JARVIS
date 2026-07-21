@@ -1,11 +1,19 @@
 {
   "name": "gmail",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Read and send emails via Gmail API",
   "intents": [
     {"pattern": "check email", "action": "check_email"},
+    {"pattern": "revisa correo", "action": "check_email"},
+    {"pattern": "revisar correo", "action": "check_email"},
     {"pattern": "read email", "action": "read_email"},
+    {"pattern": "lee correo", "action": "read_email"},
+    {"pattern": "leer correo", "action": "read_email"},
     {"pattern": "send email", "action": "send_email"},
-    {"pattern": "how many emails", "action": "count_email"}
+    {"pattern": "envía correo", "action": "send_email"},
+    {"pattern": "enviar correo", "action": "send_email"},
+    {"pattern": "how many emails", "action": "count_email"},
+    {"pattern": "cuántos correos", "action": "count_email"},
+    {"pattern": "cuantos correos", "action": "count_email"}
   ]
 }

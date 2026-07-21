@@ -13,7 +13,7 @@ class SpeechRecognizer:
 
     MODEL_DIR = Path(__file__).parent.parent / "models"
 
-    def __init__(self, model_name: str = "vosk-model-small-en-us-0.15", sample_rate: int = 16000):
+    def __init__(self, model_name: str = "vosk-model-small-es-0.42", sample_rate: int = 16000):
         self.sample_rate = sample_rate
         self.model = self._load_model(model_name)
         self._pa = pyaudio.PyAudio()

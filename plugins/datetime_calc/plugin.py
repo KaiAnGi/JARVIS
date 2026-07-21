@@ -2,6 +2,7 @@
 
 import re
 from datetime import datetime
+import locale
 
 _NUMBER_WORDS = {
     "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
@@ -11,6 +12,23 @@ _NUMBER_WORDS = {
     "eighteen": 18, "nineteen": 19, "twenty": 20, "thirty": 30,
     "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70,
     "eighty": 80, "ninety": 90, "hundred": 100, "thousand": 1000,
+    "cero": 0, "uno": 1, "dos": 2, "tres": 3, "cuatro": 4,
+    "cinco": 5, "seis": 6, "siete": 7, "ocho": 8, "nueve": 9,
+    "diez": 10, "once": 11, "doce": 12, "trece": 13,
+    "catorce": 14, "quince": 15, "dieciséis": 16, "diecisiete": 17,
+    "dieciocho": 18, "diecinueve": 19, "veinte": 20, "treinta": 30,
+    "cuarenta": 40, "cincuenta": 50, "sesenta": 60, "setenta": 70,
+    "ochenta": 80, "noventa": 90, "cien": 100, "mil": 1000,
+}
+
+_DAYS_ES = {
+    "Monday": "lunes", "Tuesday": "martes", "Wednesday": "miércoles",
+    "Thursday": "jueves", "Friday": "viernes", "Saturday": "sábado", "Sunday": "domingo",
+}
+_MONTHS_ES = {
+    "January": "enero", "February": "febrero", "March": "marzo", "April": "abril",
+    "May": "mayo", "June": "junio", "July": "julio", "August": "agosto",
+    "September": "septiembre", "October": "octubre", "November": "noviembre", "December": "diciembre",
 }
 
 
@@ -21,18 +39,20 @@ def init(bus):
 def handle(action: str, text: str, bus):
     if action == "get_time":
         now = datetime.now().strftime("%I:%M %p")
-        bus.emit("speak", f"It's {now}")
+        bus.emit("speak", f"Son las {now}")
 
     elif action == "get_date":
         now = datetime.now()
-        bus.emit("speak", f"Today is {now.strftime('%A, %B %d, %Y')}")
+        day = _DAYS_ES.get(now.strftime("%A"), now.strftime("%A"))
+        month = _MONTHS_ES.get(now.strftime("%B"), now.strftime("%B"))
+        bus.emit("speak", f"Hoy es {day} {now.day} de {month} de {now.year}")
 
     elif action == "calculate":
         result = _calculate(text)
         if result is not None:
-            bus.emit("speak", f"The answer is {result}")
+            bus.emit("speak", f"El resultado es {result}")
         else:
-            bus.emit("speak", "Sorry, I couldn't understand that calculation")
+            bus.emit("speak", "No pude entender ese cálculo")
 
 
 def _words_to_number(text: str) -> str:
@@ -44,7 +64,7 @@ def _words_to_number(text: str) -> str:
 def _calculate(text: str):
     text = text.lower()
 
-    for prefix in ("calculate", "what is", "what's"):
+    for prefix in ("calculate", "what is", "what's", "calcular", "cuánto es", "cuanto es"):
         if prefix in text:
             text = text.split(prefix, 1)[1]
             break
@@ -54,6 +74,8 @@ def _calculate(text: str):
     for word, op in [
         ("plus", "+"), ("minus", "-"), ("times", "*"),
         ("multiplied by", "*"), ("divided by", "/"), ("over", "/"),
+        ("más", "+"), ("menos", "-"), ("por", "*"),
+        ("multiplicado por", "*"), ("dividido entre", "/"), ("entre", "/"),
     ]:
         text = text.replace(word, op)
 
