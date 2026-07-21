@@ -1,11 +1,9 @@
 """gmail plugin - Read and send emails via Gmail API."""
 
-import base64
-from email.mime.text import MIMEText
-
 from googleapiclient.discovery import build
 
 from core.credentials_manager import get_credentials
+from core.language import resp
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
@@ -32,7 +30,7 @@ def init(bus):
 def handle(action: str, text: str, bus):
     service = _get_service()
     if service is None:
-        bus.emit("speak", "Gmail no está autenticado. Verifica credentials.json en config/")
+        bus.emit("speak", resp("gmail_auth"))
         return
 
     if action == "count_email":
@@ -40,7 +38,7 @@ def handle(action: str, text: str, bus):
             userId="me", maxResults=5, labelIds=["INBOX", "UNREAD"]
         ).execute()
         count = len(results.get("messages", []))
-        bus.emit("speak", f"Tienes {count} correos sin leer")
+        bus.emit("speak", resp("count_email", count=count))
 
     elif action == "check_email":
         results = service.users().messages().list(
@@ -48,7 +46,7 @@ def handle(action: str, text: str, bus):
         ).execute()
         messages = results.get("messages", [])
         if not messages:
-            bus.emit("speak", "No hay correos recientes")
+            bus.emit("speak", resp("no_email"))
             return
         summaries = []
         for msg in messages:
@@ -57,8 +55,8 @@ def handle(action: str, text: str, bus):
                 metadataHeaders=["Subject", "From"]
             ).execute()
             headers = {h["name"]: h["value"] for h in m.get("payload", {}).get("headers", [])}
-            summaries.append(f"De {headers.get('From', 'desconocido')}: {headers.get('Subject', 'sin asunto')}")
-        bus.emit("speak", f"Correos recientes: {'; '.join(summaries)}")
+            summaries.append(f"{headers.get('From', '?')}: {headers.get('Subject', '?')}")
+        bus.emit("speak", resp("check_email", emails="; ".join(summaries)))
 
     elif action == "read_email":
         results = service.users().messages().list(
@@ -66,13 +64,15 @@ def handle(action: str, text: str, bus):
         ).execute()
         messages = results.get("messages", [])
         if not messages:
-            bus.emit("speak", "No hay correos para leer")
+            bus.emit("speak", resp("no_read"))
             return
         m = service.users().messages().get(
             userId="me", id=messages[0]["id"], format="full"
         ).execute()
         headers = {h["name"]: h["value"] for h in m.get("payload", {}).get("headers", [])}
-        bus.emit("speak", f"De {headers.get('From', 'desconocido')}. Asunto: {headers.get('Subject', 'sin asunto')}")
+        bus.emit("speak", resp("read_email",
+                                **{"from": headers.get("From", "?"),
+                                   "subject": headers.get("Subject", "?")}))
 
     elif action == "send_email":
-        bus.emit("speak", "Enviar correos por voz aún no está disponible por seguridad")
+        bus.emit("speak", resp("send_email"))
