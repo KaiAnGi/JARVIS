@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Just A Rather Very Intelligent System</b><br>
-  <i>Offline Voice Assistant — Powered by Python</i>
+  <i>Local Voice Assistant — Powered by Python</i>
 </p>
 
 <p align="center">
@@ -23,54 +23,54 @@
 
 ---
 
-## ✨ Features
+## Features
 
 <table>
   <tr>
-    <td><b>🎤 Voice Activation</b></td>
+    <td><b>Voice Activation</b></td>
     <td>Wake word detection with openWakeWord — say "Hey Jarvis" to start</td>
   </tr>
   <tr>
-    <td><b>🗣️ Bilingual</b></td>
+    <td><b>Bilingual</b></td>
     <td>Full support for <b>Spanish</b> and <b>English</b> — switch with one click</td>
   </tr>
   <tr>
-    <td><b>⏱️ Time & Date</b></td>
+    <td><b>Time & Date</b></td>
     <td>Current time, date, and calendar info</td>
   </tr>
   <tr>
-    <td><b>🔢 Calculator</b></td>
+    <td><b>Calculator</b></td>
     <td>Basic math with spoken numbers (e.g., "cinco más tres")</td>
   </tr>
   <tr>
-    <td><b>🖥️ System Control</b></td>
+    <td><b>System Control</b></td>
     <td>Open/close apps, minimize/maximize windows, file explorer</td>
   </tr>
   <tr>
-    <td><b>🌐 Browser</b></td>
+    <td><b>Browser</b></td>
     <td>Google search, YouTube search & play, open any URL</td>
   </tr>
   <tr>
-    <td><b>📦 Git Control</b></td>
+    <td><b>Git Control</b></td>
     <td>git status, commit, push, pull, log</td>
   </tr>
   <tr>
-    <td><b>📝 VS Code</b></td>
+    <td><b>VS Code</b></td>
     <td>Open VS Code, projects, and files</td>
   </tr>
   <tr>
-    <td><b>📧 Gmail</b></td>
+    <td><b>Gmail</b></td>
     <td>Read/unread email count, check recent emails</td>
   </tr>
   <tr>
-    <td><b>📅 Calendar</b></td>
+    <td><b>Calendar</b></td>
     <td>List events, next event from Google Calendar</td>
   </tr>
 </table>
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 app.py                         ← Desktop entry point (PyQt6 + System Tray)
@@ -136,7 +136,7 @@ Or double-click the **J.A.R.V.I.S.** shortcut on your desktop.
 
 ---
 
-## 🎯 Usage
+## Usage
 
 | Step | Action |
 |------|--------|
@@ -173,7 +173,7 @@ Or double-click the **J.A.R.V.I.S.** shortcut on your desktop.
 
 ---
 
-## 🔌 Adding a Plugin
+## Adding a Plugin
 
 **1. Create** `plugins/my_plugin/plugin.py`:
 
@@ -191,7 +191,7 @@ def handle(action: str, text: str, bus):
 
 ---
 
-## 🔐 Google APIs (Gmail/Calendar)
+## Google APIs (Gmail/Calendar)
 
 1. Create a project in [Google Cloud Console](https://console.cloud.google.com/)
 2. Enable **Gmail API** and **Calendar API**
@@ -202,7 +202,7 @@ def handle(action: str, text: str, bus):
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 LocalVoiceAssistant/
@@ -224,7 +224,7 @@ LocalVoiceAssistant/
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
@@ -237,12 +237,12 @@ LocalVoiceAssistant/
 
 ---
 
-## 📄 License
+## License
 
 MIT License — use freely, modify freely.
 
 ---
 
 <p align="center">
-  <i>"I am Iron Man."</i> — Tony Stark
+  <i>"The truth is... I am Iron Man"</i> — Tony Stark
 </p>
