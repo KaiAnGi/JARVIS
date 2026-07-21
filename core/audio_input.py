@@ -18,6 +18,7 @@ class SpeechRecognizer:
         self.model = self._load_model(model_name)
         self._pa = pyaudio.PyAudio()
         self._stream = None
+        self._rec = None
 
     def _load_model(self, name: str) -> Model:
         path = self.MODEL_DIR / name
@@ -37,15 +38,15 @@ class SpeechRecognizer:
                 input=True,
                 frames_per_buffer=4096,
             )
+            self._rec = KaldiRecognizer(self.model, self.sample_rate)
 
     def listen_once(self) -> str:
         """Block until a complete utterance is recognized, then return text."""
         self._open_stream()
-        rec = KaldiRecognizer(self.model, self.sample_rate)
         while True:
             data = self._stream.read(4096, exception_on_overflow=False)
-            if rec.AcceptWaveform(data):
-                result = json.loads(rec.Result())
+            if self._rec.AcceptWaveform(data):
+                result = json.loads(self._rec.Result())
                 text = result.get("text", "").strip()
                 if text:
                     return text
@@ -53,11 +54,10 @@ class SpeechRecognizer:
     def listen_continuous(self, callback, stop_event=None):
         """Stream audio forever, calling callback(text) per utterance."""
         self._open_stream()
-        rec = KaldiRecognizer(self.model, self.sample_rate)
         while stop_event is None or not stop_event.is_set():
             data = self._stream.read(4096, exception_on_overflow=False)
-            if rec.AcceptWaveform(data):
-                result = json.loads(rec.Result())
+            if self._rec.AcceptWaveform(data):
+                result = json.loads(self._rec.Result())
                 text = result.get("text", "").strip()
                 if text:
                     callback(text)

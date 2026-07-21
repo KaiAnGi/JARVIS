@@ -1,5 +1,7 @@
 """Jarvis Voice Assistant - Entry point."""
 
+import threading
+
 from core.event_bus import EventBus
 from core.audio_input import SpeechRecognizer
 from core.audio_output import Speaker
@@ -18,17 +20,22 @@ def main():
 
     recognizer = SpeechRecognizer()
 
+    stop = threading.Event()
+
+    def on_speech(text):
+        print(f"You: {text}")
+        if not router.route(text, bus):
+            print("(no matching command)")
+
     print("Jarvis ready. Say something (Ctrl+C to quit).")
     try:
-        while True:
-            text = recognizer.listen_once()
-            print(f"You: {text}")
-            if not router.route(text, bus):
-                print("(no matching command)")
+        recognizer.listen_continuous(on_speech, stop_event=stop)
     except KeyboardInterrupt:
         print("\nShutting down...")
+        stop.set()
     finally:
         recognizer.cleanup()
+        speaker.shutdown()
 
 
 if __name__ == "__main__":
