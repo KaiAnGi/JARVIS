@@ -39,14 +39,13 @@ class VoiceThread(QThread):
                     self.wake_detector.stop_listening()
                     self.wake_detected.emit(wake_word)
                     self._listening = True
-                    self.recognizer.listen_once(self._on_speech)
+                    text = self.recognizer.listen_once()
+                    if text:
+                        self.speech_detected.emit(text)
                     self._listening = False
                     break
                 time.sleep(0.05)
             time.sleep(0.1)
-
-    def _on_speech(self, text):
-        self.speech_detected.emit(text)
 
     def stop(self):
         self._running = False
@@ -204,13 +203,16 @@ class JarvisWindow(QMainWindow):
         self.status_stt.set_active(True)
         self._log("SYSTEM", "Listening...")
 
-        def callback(text):
-            self._log("YOU", text)
+        def listen_in_thread():
+            text = self.recognizer.listen_once()
+            if text:
+                self._log("YOU", text)
+                self.router.route(text, self.bus)
             self.arc_reactor.set_listening(False)
             self.status_stt.set_active(False)
-            self.router.route(text, self.bus)
 
-        self.recognizer.listen_once(callback)
+        thread = QThread(target=listen_in_thread)
+        thread.start()
 
     def start_voice_thread(self):
         self.voice_thread = VoiceThread(
