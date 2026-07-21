@@ -6,6 +6,8 @@ import queue
 import pythoncom
 import win32com.client
 
+from core.language import VOICES, get_lang
+
 
 class Speaker:
     """Speaks text aloud via SAPI5 COM directly (no pyttsx3 dependency)."""
@@ -16,28 +18,42 @@ class Speaker:
         self._queue = queue.Queue()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
+        self._voice_tag = VOICES[get_lang()]
 
     def _run_loop(self):
         pythoncom.CoInitialize()
         try:
-            voice = win32com.client.Dispatch("SAPI.SpVoice")
-            voice.Rate = self._rate
-            voice.Volume = int(self._volume * 100)
-            voices = voice.GetVoices()
-            for i in range(voices.Count):
-                v = voices.Item(i)
-                if "Spanish" in v.GetDescription() or "español" in v.GetDescription().lower():
-                    voice.Voice = v
-                    break
+            self._voice = win32com.client.Dispatch("SAPI.SpVoice")
+            self._voice.Rate = self._rate
+            self._voice.Volume = int(self._volume * 100)
+            self._apply_voice()
             while True:
-                text = self._queue.get()
-                if text is None:
+                item = self._queue.get()
+                if item is None:
                     break
-                voice.Speak(str(text), 0)
+                if isinstance(item, str):
+                    self._voice.Speak(item, 0)
         except Exception as e:
             print(f"[SPEAKER] ERROR: {e}")
         finally:
             pythoncom.CoUninitialize()
+
+    def _apply_voice(self):
+        voices = self._voice.GetVoices()
+        tag = VOICES[get_lang()]
+        for i in range(voices.Count):
+            v = voices.Item(i)
+            desc = v.GetDescription()
+            if tag == "Spanish" and ("Spanish" in desc or "español" in desc.lower()):
+                self._voice.Voice = v
+                return
+            elif tag == "English" and "English" in desc:
+                self._voice.Voice = v
+                return
+
+    def switch_language(self):
+        """Switch TTS voice for the current language."""
+        self._apply_voice()
 
     def speak(self, text: str):
         self._queue.put(text)

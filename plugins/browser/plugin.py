@@ -3,6 +3,8 @@
 import webbrowser
 from urllib.parse import quote_plus
 
+from core.language import resp
+
 
 def init(bus):
     pass
@@ -13,25 +15,26 @@ def handle(action: str, text: str, bus):
         query = _extract_query(text, ("search for", "search", "google", "look up", "buscar", "busca"))
         if query:
             webbrowser.open(f"https://www.google.com/search?q={quote_plus(query)}")
-            bus.emit("speak", f"Buscando {query} en Google")
+            bus.emit("speak", resp("search_google", query=query))
         else:
-            bus.emit("speak", "¿Qué debo buscar?")
+            bus.emit("speak", resp("what_search"))
 
     elif action == "youtube_search":
         query = _extract_query(text, ("youtube", "on youtube", "en youtube"))
         if query:
             webbrowser.open(f"https://www.youtube.com/results?search_query={quote_plus(query)}")
-            bus.emit("speak", f"Buscando {query} en YouTube")
+            bus.emit("speak", resp("search_youtube", query=query))
         else:
-            bus.emit("speak", "¿Qué debo buscar en YouTube?")
+            bus.emit("speak", resp("what_youtube"))
 
     elif action == "youtube_play":
-        query = _extract_query(text, ("play on youtube", "play", "youtube", "reproduce en youtube", "reproducir en youtube"))
+        query = _extract_query(text, ("play on youtube", "play", "youtube",
+                                       "reproduce en youtube", "reproducir en youtube"))
         if query:
             webbrowser.open(f"https://www.youtube.com/results?search_query={quote_plus(query)}")
-            bus.emit("speak", f"Reproduciendo {query} en YouTube")
+            bus.emit("speak", resp("play_youtube", query=query))
         else:
-            bus.emit("speak", "¿Qué debo reproducir?")
+            bus.emit("speak", resp("what_play"))
 
     elif action == "open_url":
         url = text.lower()
@@ -43,9 +46,9 @@ def handle(action: str, text: str, bus):
             if not url.startswith("http"):
                 url = "https://" + url
             webbrowser.open(url)
-            bus.emit("speak", f"Abriendo {url}")
+            bus.emit("speak", resp("open_url", url=url))
         else:
-            bus.emit("speak", "¿Qué sitio web debo abrir?")
+            bus.emit("speak", resp("what_url"))
 
 
 def _extract_query(text: str, prefixes: tuple) -> str:

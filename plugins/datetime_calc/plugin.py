@@ -2,7 +2,8 @@
 
 import re
 from datetime import datetime
-import locale
+
+from core.language import resp
 
 _NUMBER_WORDS = {
     "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
@@ -39,20 +40,26 @@ def init(bus):
 def handle(action: str, text: str, bus):
     if action == "get_time":
         now = datetime.now().strftime("%I:%M %p")
-        bus.emit("speak", f"Son las {now}")
+        bus.emit("speak", resp("time", time=now))
 
     elif action == "get_date":
         now = datetime.now()
-        day = _DAYS_ES.get(now.strftime("%A"), now.strftime("%A"))
-        month = _MONTHS_ES.get(now.strftime("%B"), now.strftime("%B"))
-        bus.emit("speak", f"Hoy es {day} {now.day} de {month} de {now.year}")
+        from core.language import get_lang
+        if get_lang() == "es":
+            day = _DAYS_ES.get(now.strftime("%A"), now.strftime("%A"))
+            month = _MONTHS_ES.get(now.strftime("%B"), now.strftime("%B"))
+            date_str = f"{now.day} de {month} de {now.year}"
+            bus.emit("speak", resp("date", day=day, date=date_str))
+        else:
+            date_str = now.strftime("%B %d, %Y")
+            bus.emit("speak", resp("date", day=now.strftime("%A"), date=date_str))
 
     elif action == "calculate":
         result = _calculate(text)
         if result is not None:
-            bus.emit("speak", f"El resultado es {result}")
+            bus.emit("speak", resp("calc_result", result=result))
         else:
-            bus.emit("speak", "No pude entender ese cálculo")
+            bus.emit("speak", resp("calc_error"))
 
 
 def _words_to_number(text: str) -> str:

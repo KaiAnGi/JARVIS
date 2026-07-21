@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from googleapiclient.discovery import build
 
 from core.credentials_manager import get_credentials
+from core.language import resp
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -28,7 +29,7 @@ def init(bus):
 def handle(action: str, text: str, bus):
     service = _get_service()
     if service is None:
-        bus.emit("speak", "Calendar no está autenticado. Verifica credentials.json en config/")
+        bus.emit("speak", resp("cal_auth"))
         return
 
     now = datetime.now(timezone.utc)
@@ -40,13 +41,13 @@ def handle(action: str, text: str, bus):
         ).execute()
         events = events_result.get("items", [])
         if not events:
-            bus.emit("speak", "No hay eventos próximos")
+            bus.emit("speak", resp("no_events"))
             return
         summaries = []
         for e in events:
             start = e["start"].get("dateTime", e["start"].get("date"))
-            summaries.append(f"{e['summary']} a las {start}")
-        bus.emit("speak", f"Eventos próximos: {'; '.join(summaries)}")
+            summaries.append(f"{e['summary']} @ {start}")
+        bus.emit("speak", resp("list_events", events="; ".join(summaries)))
 
     elif action == "next_event":
         events_result = service.events().list(
@@ -55,11 +56,11 @@ def handle(action: str, text: str, bus):
         ).execute()
         events = events_result.get("items", [])
         if not events:
-            bus.emit("speak", "No hay eventos próximos")
+            bus.emit("speak", resp("no_events"))
             return
         e = events[0]
         start = e["start"].get("dateTime", e["start"].get("date"))
-        bus.emit("speak", f"Próximo evento: {e['summary']} a las {start}")
+        bus.emit("speak", resp("next_event", event=e["summary"], time=start))
 
     elif action == "create_event":
-        bus.emit("speak", "Crear eventos por voz aún no está disponible")
+        bus.emit("speak", resp("create_event"))
