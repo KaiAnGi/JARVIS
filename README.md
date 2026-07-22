@@ -164,6 +164,8 @@ Or double-click the **J.A.R.V.I.S.** shortcut on your desktop.
 |---------|-------------|
 | "Abre notepad" | Abre una aplicación |
 | "Abre el explorador" | Abre el explorador de archivos |
+| "Abre whatsapp" | Abre WhatsApp Web |
+| "Abre spotify" | Abre Spotify Web |
 | "Minimizar" | Minimiza la ventana activa |
 | "Maximizar" | Maximiza la ventana activa |
 | "Cierra ventana" | Cierra la ventana activa |
@@ -247,6 +249,8 @@ Or double-click the **J.A.R.V.I.S.** shortcut on your desktop.
 |---------|-------------|
 | "Open notepad" | Opens an application |
 | "Open explorer" | Opens file explorer |
+| "Open whatsapp" | Opens WhatsApp Web |
+| "Open spotify" | Opens Spotify Web |
 | "Minimize" | Minimizes active window |
 | "Maximize" | Maximizes active window |
 | "Close window" | Closes active window |
