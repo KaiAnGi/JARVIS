@@ -45,6 +45,7 @@ def main():
         window.activateWindow()
 
     def on_quit():
+        window.voice_thread.stop()
         window.close()
         app.quit()
 

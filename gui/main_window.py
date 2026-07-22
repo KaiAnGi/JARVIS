@@ -280,6 +280,7 @@ class JarvisWindow(QMainWindow):
         self.status_wake.set_active(True)
         self._log("SYSTEM", ui("session_ended"))
         self.speaker.speak(ui("goodbye"))
+        QTimer.singleShot(1500, self.hide)
 
     def _on_wake(self, wake_word):
         pass
@@ -291,6 +292,5 @@ class JarvisWindow(QMainWindow):
         QTimer.singleShot(500, lambda: self.status_router.set_active(False))
 
     def closeEvent(self, event):
-        if self.voice_thread:
-            self.voice_thread.stop()
-        event.accept()
+        event.ignore()
+        self.hide()

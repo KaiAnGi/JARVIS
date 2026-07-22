@@ -11,7 +11,7 @@ APPS = {
     "notepad": "notepad", "bloc de notas": "notepad",
     "calculator": "calc", "calc": "calc", "calculadora": "calc",
     "paint": "mspaint", "mspaint": "mspaint",
-    "explorer": "explorer", "file explorer": "explorer", "explorador": "explorador de archivos": "explorer",
+    "explorer": "explorer", "file explorer": "explorer", "explorador": "explorer", "explorador de archivos": "explorer", "browser": r"***REMOVED***", "navegador": r"***REMOVED***",
     "task manager": "taskmgr", "administrador de tareas": "taskmgr",
     "terminal": "wt", "powershell": "pwsh", "cmd": "cmd",
     "wordpad": "write",

@@ -178,8 +178,8 @@ INTENT_PATTERNS = {
 }
 
 WAKE_PHRASES = {
-    "en": ["goodbye jarvis", "bye jarvis", "exit jarvis", "close jarvis"],
-    "es": ["adiós jarvis", "adios jarvis", "hasta luego jarvis", "chao jarvis"],
+    "en": ["goodbye", "goodbye jarvis", "bye jarvis", "exit jarvis", "close jarvis"],
+    "es": ["adiós", "adios", "adiós jarvis", "adios jarvis", "hasta luego jarvis", "chao jarvis"],
 }
 
 
