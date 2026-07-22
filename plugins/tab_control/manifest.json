@@ -1,0 +1,13 @@
+{
+  "name": "tab_control",
+  "version": "1.0.0",
+  "description": "Control browser tabs via keyboard shortcuts",
+  "intents": [
+    {"pattern": "close tab", "action": "close_tab"},
+    {"pattern": "new tab", "action": "new_tab"},
+    {"pattern": "duplicate tab", "action": "duplicate_tab"},
+    {"pattern": "switch tab", "action": "switch_tab"},
+    {"pattern": "reopen tab", "action": "reopen_tab"},
+    {"pattern": "address bar", "action": "focus_address"}
+  ]
+}

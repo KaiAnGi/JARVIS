@@ -86,6 +86,14 @@ RESPONSES = {
         "no_events": "No hay eventos próximos",
         "create_event": "Crear eventos por voz aún no está disponible",
         "cal_auth": "Calendar no está autenticado. Verifica credentials.json en config/",
+        "tab_closed": "Pestaña cerrada",
+        "tab_new": "Nueva pestaña abierta",
+        "tab_duplicated": "Pestaña duplicada",
+        "tab_switched": "Abriendo selector de pestañas",
+        "tab_reopened": "Pestaña restaurada",
+        "address_focused": "Barra de direcciones enfocada",
+        "no_browser": "No hay navegador activo",
+        "tab_error": "No pude realizar esa acción",
     },
     "en": {
         "time": "It's {time}",
@@ -124,6 +132,14 @@ RESPONSES = {
         "no_events": "No upcoming events",
         "create_event": "Creating events via voice is not yet supported",
         "cal_auth": "Calendar not authenticated. Check credentials.json in config/",
+        "tab_closed": "Tab closed",
+        "tab_new": "New tab opened",
+        "tab_duplicated": "Tab duplicated",
+        "tab_switched": "Opening tab picker",
+        "tab_reopened": "Tab restored",
+        "address_focused": "Address bar focused",
+        "no_browser": "No active browser found",
+        "tab_error": "Couldn't perform that action",
     },
 }
 
@@ -174,6 +190,14 @@ INTENT_PATTERNS = {
         "next_event":  {"en": ["what's next"],            "es": ["qué sigue", "que sigue", "próximo evento"]},
         "create_event":{"en": ["create event", "add to calendar"],
                         "es": ["crear evento", "agregar al calendario"]},
+    },
+    "tab_control": {
+        "close_tab":     {"en": ["close tab"],                    "es": ["cerrar pestaña", "cierra pestaña", "cierra la pestaña"]},
+        "new_tab":       {"en": ["new tab", "open tab"],          "es": ["nueva pestaña", "abre pestaña", "abrir pestaña", "abre una pestaña"]},
+        "duplicate_tab": {"en": ["duplicate tab"],                 "es": ["duplicar pestaña", "duplica pestaña", "duplica la pestaña"]},
+        "switch_tab":    {"en": ["switch tab", "tab picker"],     "es": ["cambiar pestaña", "cambia pestaña", "cambia la pestaña", "selector de pestañas", "cambiar de pestaña"]},
+        "reopen_tab":    {"en": ["reopen tab", "restore tab"],    "es": ["reabrir pestaña", "reabre pestaña", "restaurar pestaña", "restaura pestaña"]},
+        "focus_address": {"en": ["address bar", "go to address"], "es": ["barra de direcciones", "ir a dirección", "ve a la barra de direcciones", "seleccionar barra de direcciones"]},
     },
 }
 
