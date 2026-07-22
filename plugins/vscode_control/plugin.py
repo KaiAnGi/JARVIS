@@ -1,11 +1,26 @@
 """vscode_control plugin - Open projects and control VS Code."""
 
+import os
 import subprocess
 from pathlib import Path
 
 
+_VS_CODE_PATHS = [
+    os.path.expandvars(r"***REMOVED***"),
+    r"***REMOVED***",
+    r"***REMOVED***",
+]
+
+
 def init(bus):
     pass
+
+
+def _find_code_exe():
+    for p in _VS_CODE_PATHS:
+        if os.path.isfile(p):
+            return p
+    return None
 
 
 def _run_code(*args, bus, msg="Done"):
@@ -13,7 +28,15 @@ def _run_code(*args, bus, msg="Done"):
         subprocess.Popen(["code"] + list(args))
         bus.emit("speak", msg)
     except FileNotFoundError:
-        bus.emit("speak", "VS Code is not installed or not in PATH")
+        exe = _find_code_exe()
+        if exe:
+            try:
+                subprocess.Popen([exe] + list(args))
+                bus.emit("speak", msg)
+            except Exception:
+                bus.emit("speak", "VS Code is not installed or not in PATH")
+        else:
+            bus.emit("speak", "VS Code is not installed or not in PATH")
 
 
 def handle(action: str, text: str, bus):

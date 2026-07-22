@@ -18,7 +18,8 @@ ALL_SCOPES = [
 
 
 def get_credentials(scopes: list[str] = None) -> Credentials | None:
-    scopes = ALL_SCOPES
+    if scopes is None:
+        scopes = ALL_SCOPES
     creds = None
     if TOKEN_FILE.exists():
         try:
