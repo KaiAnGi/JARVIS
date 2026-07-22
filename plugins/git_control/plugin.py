@@ -33,7 +33,7 @@ def handle(action: str, text: str, bus):
 
     elif action == "git_commit":
         msg = text.lower()
-        for prefix in ("git commit", "commit"):
+        for prefix in ("git commit", "get commit", "commit"):
             if prefix in msg:
                 msg = msg.split(prefix, 1)[1].strip()
                 break

@@ -178,11 +178,11 @@ INTENT_PATTERNS = {
         "open_url":      {"en": ["open website"],            "es": ["abre sitio web", "abre página"]},
     },
     "git_control": {
-        "git_status": {"en": ["git status"], "es": ["git status"]},
-        "git_commit": {"en": ["git commit"], "es": ["git commit"]},
-        "git_push":   {"en": ["git push"],   "es": ["git push"]},
-        "git_pull":   {"en": ["git pull"],   "es": ["git pull"]},
-        "git_log":    {"en": ["git log"],    "es": ["git log"]},
+        "git_status": {"en": ["git status", "get status"], "es": ["git status", "get status"]},
+        "git_commit": {"en": ["git commit", "get commit"], "es": ["git commit", "get commit"]},
+        "git_push":   {"en": ["git push", "get push"],     "es": ["git push", "get push"]},
+        "git_pull":   {"en": ["git pull", "get pull"],     "es": ["git pull", "get pull"]},
+        "git_log":    {"en": ["git log", "get log"],       "es": ["git log", "get log"]},
     },
     "vscode_control": {
         "open_project": {"en": ["open project"], "es": ["abre proyecto"]},
