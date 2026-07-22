@@ -92,10 +92,12 @@ app.py                         ← Desktop entry point (PyQt6 + System Tray)
     ├── datetime_calc/         ← Time, date, calculator
     ├── system_control/        ← Apps, windows, explorer
     ├── browser/               ← Google, YouTube, URLs
+    ├── tab_control/           ← Browser tab management
     ├── git_control/           ← Git commands
     ├── vscode_control/        ← VS Code integration
     ├── gmail/                 ← Email (OAuth)
     ├── calendar/              ← Events (OAuth)
+    ├── language_control/      ← Language switching
     └── media_player/          ← Stub
 ```
 
@@ -145,29 +147,171 @@ Or double-click the **J.A.R.V.I.S.** shortcut on your desktop.
 | 3️⃣ | Jarvis responds and stays in session |
 | 4️⃣ | Say **"Adiós Jarvis"** to end session |
 
-### Example Commands
+### All Commands
 
 <details>
 <summary><b>🇪🇸 Spanish</b></summary>
 
-- "¿Qué hora es?"
-- "¿Qué fecha hay hoy?"
-- "Calcula cinco más tres"
-- "Abre notepad"
-- "Busca Python en Google"
-- "¿Qué hay en mi calendario?"
+#### Hora y Fecha
+| Comando | Descripción |
+|---------|-------------|
+| "¿Qué hora es?" | Dice la hora actual |
+| "¿Qué fecha hay hoy?" | Dice la fecha de hoy |
+| "Calcula cinco más tres" | Realiza una operación matemática |
+
+#### Control del Sistema
+| Comando | Descripción |
+|---------|-------------|
+| "Abre notepad" | Abre una aplicación |
+| "Abre el explorador" | Abre el explorador de archivos |
+| "Minimizar" | Minimiza la ventana activa |
+| "Maximizar" | Maximiza la ventana activa |
+| "Cierra ventana" | Cierra la ventana activa |
+
+#### Navegador Web
+| Comando | Descripción |
+|---------|-------------|
+| "Busca Python en Google" | Busca en Google |
+| "Busca recetas en YouTube" | Busca en YouTube |
+| "Reproduce música en YouTube" | Reproduce en YouTube |
+| "Abre sitio web github.com" | Abre un sitio web |
+
+#### Control de Pestañas
+| Comando | Descripción |
+|---------|-------------|
+| "Cierra pestaña" | Cierra la pestaña actual |
+| "Nueva pestaña" | Abre una pestaña nueva |
+| "Duplica pestaña" | Duplica la pestaña actual |
+| "Cambia pestaña" | Abre el selector de pestañas |
+| "Reabre pestaña" | Restaura pestaña cerrada |
+| "Barra de direcciones" | Enfoca la barra de direcciones |
+
+#### Git
+| Comando | Descripción |
+|---------|-------------|
+| "git status" | Estado del repositorio |
+| "git commit" | Confirma cambios |
+| "git push" | Sube al remote |
+| "git pull" | Baja del remote |
+| "git log" | Últimos commits |
+
+#### VS Code
+| Comando | Descripción |
+|---------|-------------|
+| "Abre vscode" | Abre VS Code |
+| "Abre proyecto" | Abre un proyecto |
+| "Abre archivo" | Abre un archivo |
+| "Ejecuta tarea" | Ejecuta una tarea |
+
+#### Gmail
+| Comando | Descripción |
+|---------|-------------|
+| "¿Cuántos correos?" | Cuenta correos sin leer |
+| "Revisa correo" | Muestra correos recientes |
+| "Lee correo" | Lee un correo específico |
+| "Envía correo" | Envía un correo (no disponible por seguridad) |
+
+#### Calendario
+| Comando | Descripción |
+|---------|-------------|
+| "¿Qué hay en mi calendario?" | Lista próximos eventos |
+| "¿Qué sigue?" | Muestra el siguiente evento |
+| "Crear evento" | Crea un evento (no disponible aún) |
+
+#### Idioma
+| Comando | Descripción |
+|---------|-------------|
+| "Cambiar idioma" | Alterna entre español e inglés |
+| "Habla español" | Cambia a español |
+| "Habla inglés" | Cambia a inglés |
+
+#### Salir
+| Comando | Descripción |
+|---------|-------------|
+| "Adiós Jarvis" | Termina la sesión y oculta la ventana |
 
 </details>
 
 <details>
 <summary><b>🇺🇸 English</b></summary>
 
-- "What time is it?"
-- "What's the date?"
-- "Calculate five plus three"
-- "Open notepad"
-- "Search Python on Google"
-- "What's on my calendar?"
+#### Time & Date
+| Command | Description |
+|---------|-------------|
+| "What time is it?" | Tells current time |
+| "What's the date?" | Tells today's date |
+| "Calculate five plus three" | Performs math calculation |
+
+#### System Control
+| Command | Description |
+|---------|-------------|
+| "Open notepad" | Opens an application |
+| "Open explorer" | Opens file explorer |
+| "Minimize" | Minimizes active window |
+| "Maximize" | Maximizes active window |
+| "Close window" | Closes active window |
+
+#### Web Browser
+| Command | Description |
+|---------|-------------|
+| "Search Python on Google" | Searches Google |
+| "Search recipes on YouTube" | Searches YouTube |
+| "Play music on YouTube" | Plays on YouTube |
+| "Open website github.com" | Opens a website |
+
+#### Tab Control
+| Command | Description |
+|---------|-------------|
+| "Close tab" | Closes current tab |
+| "New tab" | Opens new tab |
+| "Duplicate tab" | Duplicates current tab |
+| "Switch tab" | Opens tab picker |
+| "Reopen tab" | Restores closed tab |
+| "Address bar" | Focuses address bar |
+
+#### Git
+| Command | Description |
+|---------|-------------|
+| "git status" | Repository status |
+| "git commit" | Commit changes |
+| "git push" | Push to remote |
+| "git pull" | Pull from remote |
+| "git log" | Recent commits |
+
+#### VS Code
+| Command | Description |
+|---------|-------------|
+| "Open vscode" | Opens VS Code |
+| "Open project" | Opens a project |
+| "Open file" | Opens a file |
+| "Run task" | Runs a task |
+
+#### Gmail
+| Command | Description |
+|---------|-------------|
+| "How many emails?" | Counts unread emails |
+| "Check email" | Shows recent emails |
+| "Read email" | Reads specific email |
+| "Send email" | Sends email (not available for security) |
+
+#### Calendar
+| Command | Description |
+|---------|-------------|
+| "What's on my calendar?" | Lists upcoming events |
+| "What's next?" | Shows next event |
+| "Create event" | Creates event (not available yet) |
+
+#### Language
+| Command | Description |
+|---------|-------------|
+| "Switch language" | Toggles between English and Spanish |
+| "Speak Spanish" | Switches to Spanish |
+| "Speak English" | Switches to English |
+
+#### Exit
+| Command | Description |
+|---------|-------------|
+| "Goodbye Jarvis" | Ends session and hides window |
 
 </details>
 

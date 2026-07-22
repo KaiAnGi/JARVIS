@@ -81,8 +81,8 @@ RESPONSES = {
         "no_read": "No hay correos para leer",
         "send_email": "Enviar correos por voz aún no está disponible por seguridad",
         "gmail_auth": "Gmail no está autenticado. Verifica credentials.json en config/",
-        "list_events": "Eventos próximos: {events}",
-        "next_event": "Próximo evento: {event} a las {time}",
+        "list_events": "Tienes: {events}",
+        "next_event": "Siguiente evento: {event} {time}",
         "no_events": "No hay eventos próximos",
         "create_event": "Crear eventos por voz aún no está disponible",
         "cal_auth": "Calendar no está autenticado. Verifica credentials.json en config/",
@@ -97,6 +97,9 @@ RESPONSES = {
         "language_changed": "Idioma cambiado a {lang}",
         "language_set_es": "Idioma cambiado a Español",
         "language_set_en": "Idioma cambiado a Inglés",
+        "help_summary": "Puedo ayudarte con lo siguiente: {summary}",
+        "help_list": "Puedo ayudarte con: {categories}. ¿Con cuál necesitas ayuda?",
+        "help_not_found": "No encontré esa categoría. Di 'ayuda' para ver las opciones.",
     },
     "en": {
         "time": "It's {time}",
@@ -130,8 +133,8 @@ RESPONSES = {
         "no_read": "No emails to read",
         "send_email": "Sending email via voice is not yet supported for security reasons",
         "gmail_auth": "Gmail not authenticated. Check credentials.json in config/",
-        "list_events": "Upcoming events: {events}",
-        "next_event": "Next event: {event} at {time}",
+        "list_events": "You have: {events}",
+        "next_event": "Next event: {event} {time}",
         "no_events": "No upcoming events",
         "create_event": "Creating events via voice is not yet supported",
         "cal_auth": "Calendar not authenticated. Check credentials.json in config/",
@@ -146,6 +149,9 @@ RESPONSES = {
         "language_changed": "Language changed to {lang}",
         "language_set_es": "Language changed to Spanish",
         "language_set_en": "Language changed to English",
+        "help_summary": "I can help you with the following: {summary}",
+        "help_list": "I can help with: {categories}. Which one do you need?",
+        "help_not_found": "Category not found. Say 'help' to see options.",
     },
 }
 
@@ -212,6 +218,12 @@ INTENT_PATTERNS = {
                           "es": ["cambiar a español", "habla español", "pon español"]},
         "set_english":   {"en": ["switch to english", "speak english"],
                          "es": ["cambiar a ingles", "cambiar a inglés", "habla ingles", "habla inglés", "pon ingles", "pon inglés"]},
+    },
+    "help": {
+        "help": {"en": ["help", "what can you do", "commands"],
+                "es": ["ayuda", "qué puedes hacer", "comandos", "qué sabes hacer"]},
+        "help_category": {"en": ["help with", "tell me about", "info about"],
+                         "es": ["ayuda con", "cuéntame de", "información de", "info de"]},
     },
 }
 

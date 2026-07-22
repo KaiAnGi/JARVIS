@@ -1,15 +1,21 @@
 """calendar plugin - Google Calendar events."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from googleapiclient.discovery import build
 
 from core.credentials_manager import get_credentials
-from core.language import resp
+from core.language import resp, get_lang
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 _service = None
+
+MONTHS_ES = {
+    1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
+    5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
+    9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"
+}
 
 
 def _get_service():
@@ -24,6 +30,42 @@ def _get_service():
             print(f"[CALENDAR] Failed to build service: {e}")
             return None
     return _service
+
+
+def _format_date(date_str: str) -> str:
+    try:
+        if "T" in date_str:
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        else:
+            dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        
+        now = datetime.now(timezone.utc)
+        today = now.date()
+        event_date = dt.date()
+        diff = (event_date - today).days
+        
+        if get_lang() == "es":
+            day = dt.day
+            month = MONTHS_ES[dt.month]
+            if diff == 0:
+                return "hoy"
+            elif diff == 1:
+                return "mañana"
+            elif diff == -1:
+                return "ayer"
+            else:
+                return f"{day} de {month}"
+        else:
+            if diff == 0:
+                return "today"
+            elif diff == 1:
+                return "tomorrow"
+            elif diff == -1:
+                return "yesterday"
+            else:
+                return dt.strftime("%B %d")
+    except Exception:
+        return date_str
 
 
 def init(bus):
@@ -58,7 +100,8 @@ def _handle(action: str, text: str, bus):
         summaries = []
         for e in events:
             start = e["start"].get("dateTime", e["start"].get("date"))
-            summaries.append(f"{e['summary']} @ {start}")
+            date_str = _format_date(start)
+            summaries.append(f"{e['summary']} {date_str}")
         bus.emit("speak", resp("list_events", events="; ".join(summaries)))
 
     elif action == "next_event":
@@ -72,7 +115,8 @@ def _handle(action: str, text: str, bus):
             return
         e = events[0]
         start = e["start"].get("dateTime", e["start"].get("date"))
-        bus.emit("speak", resp("next_event", event=e["summary"], time=start))
+        date_str = _format_date(start)
+        bus.emit("speak", resp("next_event", event=e["summary"], time=date_str))
 
     elif action == "create_event":
         bus.emit("speak", resp("create_event"))

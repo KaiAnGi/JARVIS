@@ -38,7 +38,7 @@ def get_credentials(scopes: list[str] = None) -> Credentials | None:
                 return None
             try:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    str(CREDENTIALS_FILE), scopes
+                    str(CREDENTIALS_FILE), ALL_SCOPES
                 )
                 creds = flow.run_local_server(port=0)
             except Exception as e:

@@ -1,0 +1,10 @@
+{
+  "name": "help",
+  "version": "1.0.0",
+  "description": "Interactive help by category",
+  "intents": [
+    {"pattern": "help", "action": "help"},
+    {"pattern": "what can you do", "action": "help"},
+    {"pattern": "help category", "action": "help_category"}
+  ]
+}
