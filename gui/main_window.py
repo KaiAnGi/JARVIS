@@ -1,5 +1,7 @@
 """Main Jarvis HUD window."""
 
+import time
+
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
@@ -13,6 +15,8 @@ from gui.styles import (
 )
 from gui.widgets import ArcReactor, StatusIndicator
 from core.language import ui, toggle_lang, is_goodbye, set_lang
+import core.database as db
+import core.logger as logger
 
 
 class VoiceThread(QThread):
@@ -76,6 +80,10 @@ class JarvisWindow(QMainWindow):
         self.bus = bus
         self.speaker = speaker
         self.voice_thread = None
+        self._session_id = 0
+
+        db.init()
+        logger.log_event("SYSTEM", "J.A.R.V.I.S. started")
 
         self.setMinimumSize(900, 650)
         self.setStyleSheet(MAIN_STYLESHEET)
@@ -216,6 +224,9 @@ class JarvisWindow(QMainWindow):
     def _log(self, sender: str, text: str):
         color = PRIMARY_COLOR if sender == "JARVIS" else SECONDARY_COLOR
         self.log_area.append(f'<span style="color:{color}">[{sender}]</span> {text}')
+        if sender in ("YOU", "JARVIS"):
+            db.save_conversation(sender, text, self._session_id)
+        logger.log_event(sender, text)
 
     def _toggle_language(self):
         new_lang = toggle_lang()
@@ -242,7 +253,11 @@ class JarvisWindow(QMainWindow):
         self.text_input.clear()
         self._log("YOU", text)
         self.status_router.set_active(True)
-        self.router.route(text, self.bus)
+        t0 = time.time()
+        handled = self.router.route(text, self.bus)
+        elapsed = (time.time() - t0) * 1000
+        action = text.split()[0] if text else "text_input"
+        db.save_command(action, text, success=handled, duration_ms=elapsed)
         QTimer.singleShot(500, lambda: self.status_router.set_active(False))
 
     def _on_manual_listen(self):
@@ -273,6 +288,8 @@ class JarvisWindow(QMainWindow):
         self.status_wake.set_active(True)
 
     def _on_session_start(self):
+        self._session_id = int(time.time())
+        logger.log_session_start()
         self.showNormal()
         self.activateWindow()
         self.raise_()
@@ -287,6 +304,7 @@ class JarvisWindow(QMainWindow):
         self.status_stt.set_active(False)
         self.status_wake.set_active(True)
         self._log("SYSTEM", ui("session_ended"))
+        logger.log_session_end()
         self.speaker.speak(ui("goodbye"))
         QTimer.singleShot(1500, self.hide)
 
@@ -296,7 +314,11 @@ class JarvisWindow(QMainWindow):
     def _on_speech(self, text):
         self._log("YOU", text)
         self.status_router.set_active(True)
+        t0 = time.time()
         handled = self.router.route(text, self.bus)
+        elapsed = (time.time() - t0) * 1000
+        action = text.split()[0] if text else "voice"
+        db.save_command(action, text, success=handled, duration_ms=elapsed)
         if not handled:
             browser = self.router._plugins.get("browser")
             if browser and hasattr(browser, "_waiting_youtube") and browser._waiting_youtube:
@@ -488,5 +510,6 @@ class JarvisWindow(QMainWindow):
             self.bus.emit("speak", resp("no_match"))
 
     def closeEvent(self, event):
+        logger.log_event("SYSTEM", "J.A.R.V.I.S. shutting down")
         event.ignore()
         self.hide()
