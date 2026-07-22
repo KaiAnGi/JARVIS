@@ -1,5 +1,8 @@
 """Jarvis Voice Assistant - Entry point."""
 
+from core.config import load_env
+load_env()
+
 import threading
 import time
 

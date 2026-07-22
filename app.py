@@ -1,5 +1,8 @@
 """Jarvis Desktop Application - Entry point."""
 
+from core.config import load_env
+load_env()
+
 import sys
 import threading
 
