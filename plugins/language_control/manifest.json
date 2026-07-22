@@ -1,0 +1,10 @@
+{
+  "name": "language_control",
+  "version": "1.0.0",
+  "description": "Switch language via voice commands",
+  "intents": [
+    {"pattern": "toggle language", "action": "toggle_language"},
+    {"pattern": "set spanish", "action": "set_spanish"},
+    {"pattern": "set english", "action": "set_english"}
+  ]
+}

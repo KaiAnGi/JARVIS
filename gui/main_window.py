@@ -204,6 +204,14 @@ class JarvisWindow(QMainWindow):
     def _connect_signals(self):
         self.bus.subscribe("speak", lambda text: self._log("JARVIS", text))
         self.bus.subscribe("speak", lambda text: self.speaker.speak(text))
+        self.bus.subscribe("language_changed", lambda lang: self._on_language_changed(lang))
+
+    def _on_language_changed(self, lang):
+        self.recognizer.switch_language()
+        self.speaker.switch_language()
+        self.router.rebuild_patterns()
+        self._refresh_ui()
+        self._log("SYSTEM", f"{'Idioma: Español' if lang == 'es' else 'Language: English'}")
 
     def _log(self, sender: str, text: str):
         color = PRIMARY_COLOR if sender == "JARVIS" else SECONDARY_COLOR

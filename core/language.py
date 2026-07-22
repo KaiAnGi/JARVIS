@@ -94,6 +94,9 @@ RESPONSES = {
         "address_focused": "Barra de direcciones enfocada",
         "no_browser": "No hay navegador activo",
         "tab_error": "No pude realizar esa acción",
+        "language_changed": "Idioma cambiado a {lang}",
+        "language_set_es": "Idioma cambiado a Español",
+        "language_set_en": "Idioma cambiado a Inglés",
     },
     "en": {
         "time": "It's {time}",
@@ -140,6 +143,9 @@ RESPONSES = {
         "address_focused": "Address bar focused",
         "no_browser": "No active browser found",
         "tab_error": "Couldn't perform that action",
+        "language_changed": "Language changed to {lang}",
+        "language_set_es": "Language changed to Spanish",
+        "language_set_en": "Language changed to English",
     },
 }
 
@@ -198,6 +204,14 @@ INTENT_PATTERNS = {
         "switch_tab":    {"en": ["switch tab", "tab picker"],     "es": ["cambiar pestaña", "cambia pestaña", "cambia la pestaña", "selector de pestañas", "cambiar de pestaña"]},
         "reopen_tab":    {"en": ["reopen tab", "restore tab"],    "es": ["reabrir pestaña", "reabre pestaña", "restaurar pestaña", "restaura pestaña"]},
         "focus_address": {"en": ["address bar", "go to address"], "es": ["barra de direcciones", "ir a dirección", "ve a la barra de direcciones", "seleccionar barra de direcciones"]},
+    },
+    "language_control": {
+        "toggle_language": {"en": ["switch language", "change language", "toggle language"],
+                           "es": ["cambiar idioma", "cambia idioma", "cambiar a español", "cambiar a ingles"]},
+        "set_spanish":    {"en": ["switch to spanish", "speak spanish"],
+                          "es": ["cambiar a español", "habla español", "pon español"]},
+        "set_english":   {"en": ["switch to english", "speak english"],
+                         "es": ["cambiar a ingles", "cambiar a inglés", "habla ingles", "habla inglés", "pon ingles", "pon inglés"]},
     },
 }
 
