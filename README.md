@@ -145,7 +145,7 @@ Or double-click the **J.A.R.V.I.S.** shortcut on your desktop.
 | 1️⃣ | Say **"Hey Jarvis"** (or click **ACTIVATE**) |
 | 2️⃣ | Speak your command |
 | 3️⃣ | Jarvis responds and stays in session |
-| 4️⃣ | Say **"Adiós Jarvis"** to end session |
+| 4️⃣ | Say **"Goodbye Jarvis"** to end session |
 
 ### All Commands
 
