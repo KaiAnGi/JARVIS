@@ -18,7 +18,7 @@
 
 <p align="center">
   A fully offline, free voice assistant inspired by Tony Stark's AI.<br>
-  Say <b>"Hey Jarvis"</b> to activate — no cloud APIs, no subscriptions, 100% local.
+  Say <b>"Hey Jarvis"</b> to activate — no paid APIs, no subscriptions, 100% local.
 </p>
 
 ---
