@@ -301,6 +301,9 @@ class JarvisWindow(QMainWindow):
             browser = self.router._plugins.get("browser")
             if browser and hasattr(browser, "_waiting_youtube") and browser._waiting_youtube:
                 browser.handle("youtube_search", text, self.bus)
+            else:
+                from core.language import resp
+                self.bus.emit("speak", resp("no_match"))
         QTimer.singleShot(500, lambda: self.status_router.set_active(False))
 
     def closeEvent(self, event):
