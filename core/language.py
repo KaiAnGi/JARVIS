@@ -129,6 +129,7 @@ RESPONSES = {
         "help_list": "Puedo ayudarte con: {categories}. ¿Con cuál necesitas ayuda?",
         "help_not_found": "No encontré esa categoría. Di 'ayuda' para ver las opciones.",
         "no_match": "No estoy seguro de entender. ¿Puedes repetirlo o decir 'ayuda'?",
+        "no_ollama": "No tengo Ollama disponible para entender comandos complejos. Solo puedo ejecutar comandos básicos.",
     },
     "en": {
         "time": "It's {time}",
@@ -210,6 +211,7 @@ RESPONSES = {
         "help_list": "I can help with: {categories}. Which one do you need?",
         "help_not_found": "Category not found. Say 'help' to see options.",
         "no_match": "I'm not sure I understand. Can you repeat or say 'help'?",
+        "no_ollama": "I don't have Ollama available for complex commands. I can only run basic commands.",
     },
 }
 

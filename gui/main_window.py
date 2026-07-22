@@ -302,9 +302,190 @@ class JarvisWindow(QMainWindow):
             if browser and hasattr(browser, "_waiting_youtube") and browser._waiting_youtube:
                 browser.handle("youtube_search", text, self.bus)
             else:
+                self._try_fuzzy_intent(text)
+        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
+
+    def _try_fuzzy_intent(self, text):
+        """Use Ollama to understand unmatched voice commands."""
+        try:
+            from core.fuzzy_intent import match_fuzzy, is_ollama_ready
+            if not is_ollama_ready():
+                from core.language import resp
+                self.bus.emit("speak", resp("no_ollama"))
+                return
+            result = match_fuzzy(text)
+            if not result or result.get("action") == "unknown":
                 from core.language import resp
                 self.bus.emit("speak", resp("no_match"))
-        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
+                return
+            self._execute_fuzzy_action(result)
+        except Exception as e:
+            print(f"[FUZZY] Error: {e}")
+            from core.language import resp
+            self.bus.emit("speak", resp("no_match"))
+
+    def _execute_fuzzy_action(self, action: dict):
+        """Execute an action returned by fuzzy intent matching."""
+        name = action.get("action", "")
+
+        if name == "open_app":
+            plugin = self.router._plugins.get("system_control")
+            if plugin:
+                app = action.get("app", "")
+                plugin.handle("open_app", f"open {app}", self.bus)
+
+        elif name == "web_search":
+            plugin = self.router._plugins.get("browser")
+            if plugin:
+                query = action.get("query", "")
+                plugin.handle("web_search", f"search for {query}", self.bus)
+
+        elif name == "youtube_search":
+            plugin = self.router._plugins.get("browser")
+            if plugin:
+                query = action.get("query", "")
+                plugin.handle("youtube_search", f"youtube {query}", self.bus)
+
+        elif name == "check_email":
+            plugin = self.router._plugins.get("gmail")
+            if plugin:
+                plugin.handle("check_email", "check email", self.bus)
+
+        elif name == "read_email":
+            plugin = self.router._plugins.get("gmail")
+            if plugin:
+                plugin.handle("read_email", "read email", self.bus)
+
+        elif name == "count_email":
+            plugin = self.router._plugins.get("gmail")
+            if plugin:
+                plugin.handle("count_email", "how many emails", self.bus)
+
+        elif name == "list_events":
+            plugin = self.router._plugins.get("calendar")
+            if plugin:
+                plugin.handle("list_events", "what's on my calendar", self.bus)
+
+        elif name == "next_event":
+            plugin = self.router._plugins.get("calendar")
+            if plugin:
+                plugin.handle("next_event", "what's next", self.bus)
+
+        elif name == "get_time":
+            plugin = self.router._plugins.get("datetime_calc")
+            if plugin:
+                plugin.handle("get_time", "what time", self.bus)
+
+        elif name == "get_date":
+            plugin = self.router._plugins.get("datetime_calc")
+            if plugin:
+                plugin.handle("get_date", "what date", self.bus)
+
+        elif name == "calculate":
+            plugin = self.router._plugins.get("datetime_calc")
+            if plugin:
+                expr = action.get("expression", "")
+                plugin.handle("calculate", f"calculate {expr}", self.bus)
+
+        elif name == "minimize_window":
+            plugin = self.router._plugins.get("system_control")
+            if plugin:
+                plugin.handle("minimize_window", "minimize", self.bus)
+
+        elif name == "maximize_window":
+            plugin = self.router._plugins.get("system_control")
+            if plugin:
+                plugin.handle("maximize_window", "maximize", self.bus)
+
+        elif name == "close_window":
+            plugin = self.router._plugins.get("system_control")
+            if plugin:
+                plugin.handle("close_window", "close window", self.bus)
+
+        elif name == "set_alarm":
+            plugin = self.router._plugins.get("clock")
+            if plugin:
+                time_str = action.get("time", "")
+                rep = action.get("repetition", "none")
+                msg = action.get("message", "")
+                text = f"set alarm at {time_str}"
+                if rep != "none":
+                    text += f" {rep}"
+                if msg:
+                    text += f" message {msg}"
+                plugin.handle("set_alarm", text, self.bus)
+
+        elif name == "start_timer":
+            plugin = self.router._plugins.get("clock")
+            if plugin:
+                duration = action.get("duration", "5")
+                unit = action.get("unit", "minutes")
+                plugin.handle("start_timer", f"timer for {duration} {unit}", self.bus)
+
+        elif name == "start_stopwatch":
+            plugin = self.router._plugins.get("clock")
+            if plugin:
+                plugin.handle("start_stopwatch", "start stopwatch", self.bus)
+
+        elif name == "stop_stopwatch":
+            plugin = self.router._plugins.get("clock")
+            if plugin:
+                plugin.handle("stop_stopwatch", "stop stopwatch", self.bus)
+
+        elif name == "read_stopwatch":
+            plugin = self.router._plugins.get("clock")
+            if plugin:
+                plugin.handle("read_stopwatch", "read stopwatch", self.bus)
+
+        elif name == "reset_stopwatch":
+            plugin = self.router._plugins.get("clock")
+            if plugin:
+                plugin.handle("reset_stopwatch", "reset stopwatch", self.bus)
+
+        elif name == "git_status":
+            plugin = self.router._plugins.get("git_control")
+            if plugin:
+                plugin.handle("git_status", "git status", self.bus)
+
+        elif name == "git_commit":
+            plugin = self.router._plugins.get("git_control")
+            if plugin:
+                msg = action.get("message", "")
+                plugin.handle("git_commit", f"git commit {msg}", self.bus)
+
+        elif name == "git_push":
+            plugin = self.router._plugins.get("git_control")
+            if plugin:
+                plugin.handle("git_push", "git push", self.bus)
+
+        elif name == "git_pull":
+            plugin = self.router._plugins.get("git_control")
+            if plugin:
+                plugin.handle("git_pull", "git pull", self.bus)
+
+        elif name == "close_tab":
+            plugin = self.router._plugins.get("tab_control")
+            if plugin:
+                plugin.handle("close_tab", "close tab", self.bus)
+
+        elif name == "new_tab":
+            plugin = self.router._plugins.get("tab_control")
+            if plugin:
+                plugin.handle("new_tab", "new tab", self.bus)
+
+        elif name == "duplicate_tab":
+            plugin = self.router._plugins.get("tab_control")
+            if plugin:
+                plugin.handle("duplicate_tab", "duplicate tab", self.bus)
+
+        elif name == "help":
+            plugin = self.router._plugins.get("help")
+            if plugin:
+                plugin.handle("help", "help", self.bus)
+
+        else:
+            from core.language import resp
+            self.bus.emit("speak", resp("no_match"))
 
     def closeEvent(self, event):
         event.ignore()
