@@ -173,7 +173,7 @@ INTENT_PATTERNS = {
     },
     "browser": {
         "web_search":    {"en": ["search", "google"],       "es": ["buscar", "busca"]},
-        "youtube_search":{"en": ["youtube"],                 "es": ["youtube"]},
+        "youtube_search":{"en": ["youtube", "you tube"],     "es": ["youtube", "you tube"]},
         "youtube_play":  {"en": ["play on youtube", "play"], "es": ["reproduce en youtube", "reproducir en youtube"]},
         "open_url":      {"en": ["open website"],            "es": ["abre sitio web", "abre página"]},
     },
