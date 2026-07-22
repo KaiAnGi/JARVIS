@@ -54,6 +54,9 @@ APPS = {
     "obs studio": r"C:\Program Files\obs-studio\bin\64bit\obs64.exe",
     "edge": "msedge",
     "microsoft edge": "msedge",
+    "whatsapp": "https://web.whatsapp.com",
+    "whatsapp web": "https://web.whatsapp.com",
+    "spotify": "https://open.spotify.com",
 }
 
 
@@ -92,7 +95,11 @@ def _open_app(text: str, bus):
         bus.emit("speak", resp("what_open"))
         return
 
-    cmd = APPS.get(name, name)
+    cmd = APPS.get(name)
+
+    if cmd is None:
+        bus.emit("speak", resp("open_fail", name=name))
+        return
 
     if cmd.startswith("http"):
         import webbrowser
