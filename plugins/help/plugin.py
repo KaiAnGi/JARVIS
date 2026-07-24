@@ -16,6 +16,7 @@ CATEGORIES_ES = {
     "correos": "Puedo leer tus correos de Gmail. Di: cuántos correos, revisa correo, lee correo.",
     "calendario": "Puedo ver tus eventos. Di: qué hay en mi calendario, qué sigue.",
     "idioma": "Puedo cambiar el idioma. Di: cambiar idioma, habla español, habla inglés.",
+    "historial": "Puedo consultar comandos pasados. Di: último comando, historial de comandos.",
     "salir": "Puedo cerrar la sesión. Di: adiós jarvis.",
 }
 
@@ -32,6 +33,7 @@ CATEGORIES_EN = {
     "email": "I can read your Gmail. Say: how many emails, check email, read email.",
     "calendar": "I can check your events. Say: what's on my calendar, what's next.",
     "language": "I can switch language. Say: switch language, speak Spanish, speak English.",
+    "history": "I can check past commands. Say: last command, command history.",
     "exit": "I can end the session. Say: goodbye jarvis.",
 }
 

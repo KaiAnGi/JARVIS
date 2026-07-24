@@ -298,6 +298,9 @@ class JarvisWindow(QMainWindow):
         self.status_wake.set_active(False)
         self._log("SYSTEM", ui("session_active"))
         self.speaker.speak(ui("yes"))
+        browser = self.router._plugins.get("browser")
+        if browser and hasattr(browser, "reset_state"):
+            browser.reset_state()
 
     def _on_session_end(self):
         self.arc_reactor.set_listening(False)
@@ -315,7 +318,13 @@ class JarvisWindow(QMainWindow):
         self._log("YOU", text)
         self.status_router.set_active(True)
         t0 = time.time()
-        handled = self.router.route(text, self.bus)
+        try:
+            handled = self.router.route(text, self.bus)
+        except Exception as e:
+            logger.error(f"Routing error: {e}")
+            from core.language import resp
+            self.bus.emit("speak", resp("error"))
+            handled = False
         elapsed = (time.time() - t0) * 1000
         action = text.split()[0] if text else "voice"
         db.save_command(action, text, success=handled, duration_ms=elapsed)
@@ -324,6 +333,8 @@ class JarvisWindow(QMainWindow):
             if browser and hasattr(browser, "_waiting_youtube") and browser._waiting_youtube:
                 browser.handle("youtube_search", text, self.bus)
             else:
+                from core.language import resp
+                self.bus.emit("speak", resp("processing"))
                 self._try_fuzzy_intent(text)
         QTimer.singleShot(500, lambda: self.status_router.set_active(False))
 
@@ -375,6 +386,8 @@ class JarvisWindow(QMainWindow):
             "read_stopwatch": "read stopwatch", "reset_stopwatch": "reset stopwatch",
             "git_status": "git status", "git_push": "git push", "git_pull": "git pull",
             "close_tab": "close tab", "new_tab": "new tab", "duplicate_tab": "duplicate tab",
+            "last_command": "last command", "command_history": "command history",
+            "clear_history": "clear history",
             "help": "help",
         }
 
@@ -393,6 +406,8 @@ class JarvisWindow(QMainWindow):
             "git_push": "git_control", "git_pull": "git_control",
             "close_tab": "tab_control", "new_tab": "tab_control",
             "duplicate_tab": "tab_control",
+            "last_command": "command_history", "command_history": "command_history",
+            "clear_history": "command_history",
             "help": "help",
         }
 
