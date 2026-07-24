@@ -14,6 +14,10 @@ class IntentRouter:
         self._intents.append((pattern, plugin_name, action, plugin_module))
         self._plugins[plugin_name] = plugin_module
 
+    def register_plugin(self, name: str, module):
+        """Register a plugin module by name."""
+        self._plugins[name] = module
+
     def rebuild_patterns(self):
         """Rebuild pattern list from current language."""
         self._intents.clear()

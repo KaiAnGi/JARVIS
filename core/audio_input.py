@@ -57,7 +57,6 @@ class SpeechRecognizer:
         with self._lock:
             self.stop()
             self._current_lang = get_lang()
-            self.model = self._get_model(self._current_lang)
 
     def auto_detect_language(self, text: str) -> str | None:
         """Detect language from text patterns. Returns lang code or None."""

@@ -29,7 +29,7 @@ def load_plugins(bus, router):
             if hasattr(module, "init"):
                 module.init(bus)
 
-            router._plugins[name] = module
+            router.register_plugin(name, module)
             print(f"[PLUGIN] Loaded: {name}")
         except Exception as e:
             print(f"[PLUGIN] Failed to load {plugin_dir.name}: {e}")

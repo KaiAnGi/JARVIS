@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient, QFont
 from PyQt6.QtWidgets import QWidget
 
-from gui.styles import PRIMARY_COLOR, SECONDARY_COLOR
+from gui.styles import PRIMARY_COLOR, SECONDARY_COLOR, TEXT_COLOR
 
 
 class ArcReactor(QWidget):
@@ -98,9 +98,6 @@ class ArcReactor(QWidget):
         painter.drawText(QRectF(0, cy + radius + 10, self.size, 30), Qt.AlignmentFlag.AlignCenter, label)
 
         painter.end()
-
-
-from gui.styles import TEXT_COLOR
 
 
 class StatusIndicator(QWidget):
