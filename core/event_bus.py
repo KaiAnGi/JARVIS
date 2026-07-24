@@ -14,7 +14,10 @@ class EventBus:
 
     def emit(self, event: str, data: Any = None):
         for callback in self._subscribers.get(event, []):
-            callback(data)
+            try:
+                callback(data)
+            except Exception as e:
+                print(f"[EVENT_BUS] Error in subscriber for '{event}': {e}")
 
     def unsubscribe(self, event: str, callback: Callable):
         if event in self._subscribers:

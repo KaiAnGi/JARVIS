@@ -8,6 +8,16 @@ from openwakeword.model import Model
 from openwakeword.utils import download_models
 
 
+def _find_models_dir() -> str:
+    """Find openWakeWord models directory without hardcoding .venv path."""
+    try:
+        import openwakeword
+        return os.path.join(os.path.dirname(openwakeword.__file__), "resources", "models")
+    except (ImportError, AttributeError):
+        pass
+    return os.path.join(os.path.dirname(__file__), "..", "models", "openwakeword")
+
+
 class WakeWordDetector:
     def __init__(self, wake_words=None, threshold=0.5):
         self.wake_words = wake_words or ["hey_jarvis_v0.1"]
@@ -18,10 +28,7 @@ class WakeWordDetector:
 
     def load(self):
         download_models()
-        models_dir = os.path.join(
-            os.path.dirname(__file__), "..", ".venv", "Lib", "site-packages",
-            "openwakeword", "resources", "models"
-        )
+        models_dir = _find_models_dir()
         model_paths = []
         for w in self.wake_words:
             name = w if w.endswith(".onnx") else f"{w}.onnx"

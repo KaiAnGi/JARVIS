@@ -47,7 +47,9 @@ def main():
                     print(f"[WAKE] Detected: {wake_word}")
                     speaker.speak("Yes?")
                     time.sleep(0.5)
-                    recognizer.listen_once(on_speech)
+                    text = recognizer.listen_once()
+                    if text:
+                        on_speech(text)
                     break
             time.sleep(0.1)
     except KeyboardInterrupt:
