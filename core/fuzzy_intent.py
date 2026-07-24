@@ -10,13 +10,17 @@ from core.ollama_client import chat, is_available, MODEL
 from core.language import get_lang
 
 _available = None
+_last_check = 0.0
+_RECHECK_INTERVAL = 60.0
 
 
 def is_ollama_ready() -> bool:
-    """Check once if Ollama is available, cache the result."""
-    global _available
-    if _available is None:
+    """Check if Ollama is available, rechecking periodically."""
+    global _available, _last_check
+    now = __import__("time").time()
+    if _available is None or now - _last_check > _RECHECK_INTERVAL:
         _available = is_available()
+        _last_check = now
         if not _available:
             print("[FUZZY] Ollama not available — fuzzy intent disabled")
     return _available

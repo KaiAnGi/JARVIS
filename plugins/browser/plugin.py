@@ -2,24 +2,37 @@
 
 import re
 import threading
+import time
 import webbrowser
 from urllib.parse import quote_plus
 
 from core.language import resp
 
 _waiting_youtube = False
+_waiting_youtube_ts = 0.0
+_YOUTUBE_TIMEOUT = 30.0
 
 
 def init(bus):
     pass
 
 
+def reset_state():
+    """Reset plugin state. Call on new session."""
+    global _waiting_youtube, _waiting_youtube_ts
+    _waiting_youtube = False
+    _waiting_youtube_ts = 0.0
+
+
 def handle(action: str, text: str, bus):
-    global _waiting_youtube
+    global _waiting_youtube, _waiting_youtube_ts
 
     if _waiting_youtube:
-        _do_youtube_search(text, bus)
-        return
+        if time.time() - _waiting_youtube_ts > _YOUTUBE_TIMEOUT:
+            _waiting_youtube = False
+        else:
+            _do_youtube_search(text, bus)
+            return
 
     if action == "web_search":
         query = _extract_query(text, ("search for", "search", "google", "look up", "buscar", "busca"))
@@ -35,6 +48,7 @@ def handle(action: str, text: str, bus):
             _do_youtube_search(query, bus)
         else:
             _waiting_youtube = True
+            _waiting_youtube_ts = time.time()
             bus.emit("speak", resp("what_youtube"))
 
     elif action == "youtube_play":
@@ -44,6 +58,7 @@ def handle(action: str, text: str, bus):
             _do_youtube_search(query, bus)
         else:
             _waiting_youtube = True
+            _waiting_youtube_ts = time.time()
             bus.emit("speak", resp("what_play"))
 
     elif action == "open_url":

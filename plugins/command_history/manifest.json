@@ -1,0 +1,10 @@
+{
+  "name": "command_history",
+  "version": "1.0.0",
+  "description": "Voice access to command history",
+  "intents": [
+    {"pattern": "last command", "action": "last_command"},
+    {"pattern": "command history", "action": "command_history"},
+    {"pattern": "clear history", "action": "clear_history"}
+  ]
+}

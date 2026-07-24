@@ -7,11 +7,24 @@ from datetime import datetime, timedelta
 from core.language import resp, get_lang
 
 _alarms = []
+_alarms_lock = threading.Lock()
 _timer_thread = None
 _timer_cancel = threading.Event()
 _stopwatch_start = None
 _stopwatch_running = False
 _stopwatch_elapsed = timedelta(0)
+
+_ACTIONS = {
+    "set_alarm":      lambda text, bus: _set_alarm(text, bus),
+    "cancel_alarm":   lambda text, bus: _cancel_alarm(text, bus),
+    "list_alarms":    lambda text, bus: _list_alarms(bus),
+    "start_timer":    lambda text, bus: _start_timer(text, bus),
+    "stop_timer":     lambda text, bus: _stop_timer(bus),
+    "start_stopwatch": lambda text, bus: _start_stopwatch(bus),
+    "stop_stopwatch":  lambda text, bus: _stop_stopwatch(bus),
+    "reset_stopwatch": lambda text, bus: _reset_stopwatch(bus),
+    "read_stopwatch":  lambda text, bus: _read_stopwatch(bus),
+}
 
 
 def init(bus):
@@ -19,30 +32,14 @@ def init(bus):
 
 
 def handle(action: str, text: str, bus):
-    if action == "set_alarm":
-        _set_alarm(text, bus)
-    elif action == "cancel_alarm":
-        _cancel_alarm(text, bus)
-    elif action == "list_alarms":
-        _list_alarms(bus)
-    elif action == "start_timer":
-        _start_timer(text, bus)
-    elif action == "stop_timer":
-        _stop_timer(bus)
-    elif action == "start_stopwatch":
-        _start_stopwatch(bus)
-    elif action == "stop_stopwatch":
-        _stop_stopwatch(bus)
-    elif action == "reset_stopwatch":
-        _reset_stopwatch(bus)
-    elif action == "read_stopwatch":
-        _read_stopwatch(bus)
+    handler = _ACTIONS.get(action)
+    if handler:
+        handler(text, bus)
 
 
 # ── Alarms ──────────────────────────────────────────────────────────
 
 def _set_alarm(text: str, bus):
-    global _alarms
     text_lower = text.lower()
     lang = get_lang()
 
@@ -70,9 +67,10 @@ def _set_alarm(text: str, bus):
         "time": alarm_time,
         "message": message,
         "repetition": repetition,
-        "id": len(_alarms),
     }
-    _alarms.append(alarm)
+    with _alarms_lock:
+        alarm["id"] = len(_alarms)
+        _alarms.append(alarm)
 
     _schedule_alarm(alarm, bus)
 
@@ -103,8 +101,9 @@ def _schedule_alarm(alarm: dict, bus):
                 bus.emit("speak", alarm["message"])
 
                 if alarm["repetition"] == "none":
-                    if alarm in _alarms:
-                        _alarms.remove(alarm)
+                    with _alarms_lock:
+                        if alarm in _alarms:
+                            _alarms.remove(alarm)
                     break
                 else:
                     alarm["time"] = _next_occurrence(
@@ -132,30 +131,33 @@ def _next_occurrence(dt: datetime, repetition: str) -> datetime:
 
 
 def _cancel_alarm(text: str, bus):
-    global _alarms
     text_lower = text.lower()
 
-    if "all" in text_lower or "todos" in text_lower:
-        count = len(_alarms)
-        _alarms.clear()
-        bus.emit("speak", resp("alarm_cancel_all", count=count))
-        return
+    with _alarms_lock:
+        if "all" in text_lower or "todos" in text_lower:
+            count = len(_alarms)
+            _alarms.clear()
+            bus.emit("speak", resp("alarm_cancel_all", count=count))
+            return
 
-    if _alarms:
-        alarm = _alarms.pop()
-        bus.emit("speak", resp("alarm_cancelled",
-                               time=alarm["time"].strftime("%H:%M")))
-    else:
-        bus.emit("speak", resp("alarm_none"))
+        if _alarms:
+            alarm = _alarms.pop()
+            bus.emit("speak", resp("alarm_cancelled",
+                                   time=alarm["time"].strftime("%H:%M")))
+        else:
+            bus.emit("speak", resp("alarm_none"))
 
 
 def _list_alarms(bus):
-    if not _alarms:
+    with _alarms_lock:
+        alarms_snapshot = list(_alarms)
+
+    if not alarms_snapshot:
         bus.emit("speak", resp("alarm_none"))
         return
 
     summaries = []
-    for a in _alarms:
+    for a in alarms_snapshot:
         rep = _repetition_text(a["repetition"], get_lang())
         summaries.append(f"{a['time'].strftime('%H:%M')} {rep}")
 

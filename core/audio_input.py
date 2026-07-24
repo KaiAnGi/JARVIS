@@ -18,6 +18,9 @@ try:
 except ImportError:
     _HAS_NR = False
 
+ENERGY_THRESHOLD = 500        # Minimum RMS energy to detect speech
+PROP_DECREASE = 0.8           # Noise reduction strength (0=no reduction, 1=full)
+
 
 class SpeechRecognizer:
     """Captures microphone audio and transcribes to text offline using Vosk."""
@@ -99,9 +102,9 @@ class SpeechRecognizer:
         if not self._nr:
             return True
         audio = np.frombuffer(data, dtype=np.int16).astype(np.float32)
-        reduced = nr.reduce_noise(y=audio, sr=self.sample_rate, prop_decrease=0.8)
+        reduced = nr.reduce_noise(y=audio, sr=self.sample_rate, prop_decrease=PROP_DECREASE)
         energy = np.sqrt(np.mean(reduced ** 2))
-        return energy > 500
+        return energy > ENERGY_THRESHOLD
 
     def listen_once(self) -> str:
         """Block until a complete utterance is recognized, then return text."""
@@ -111,9 +114,15 @@ class SpeechRecognizer:
             with self._lock:
                 if self._stream is None:
                     return ""
+            try:
                 data = self._stream.read(4096, exception_on_overflow=False)
-                if not self._is_speech(data):
-                    continue
+            except Exception:
+                return ""
+            if not self._is_speech(data):
+                continue
+            with self._lock:
+                if self._rec is None:
+                    return ""
                 if self._rec.AcceptWaveform(data):
                     result = json.loads(self._rec.Result())
                     text = result.get("text", "").strip()
@@ -128,9 +137,15 @@ class SpeechRecognizer:
             with self._lock:
                 if self._stream is None:
                     return "", ""
+            try:
                 data = self._stream.read(4096, exception_on_overflow=False)
-                if not self._is_speech(data):
-                    continue
+            except Exception:
+                return "", ""
+            if not self._is_speech(data):
+                continue
+            with self._lock:
+                if self._rec is None:
+                    return "", ""
                 if self._rec.AcceptWaveform(data):
                     result = json.loads(self._rec.Result())
                     text = result.get("text", "").strip()

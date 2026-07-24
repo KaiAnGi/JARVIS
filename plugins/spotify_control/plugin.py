@@ -2,6 +2,7 @@
 
 import json
 import os
+import threading
 import urllib.request
 import base64
 from core.language import resp
@@ -13,6 +14,7 @@ TOKEN_PATH = os.environ.get("SPOTIFY_TOKEN_PATH", "")
 SCOPE = "user-modify-playback-state user-read-playback-state user-read-currently-playing"
 
 _token_cache = {"access_token": "", "refresh_token": ""}
+_token_lock = threading.Lock()
 
 
 def init(bus):
@@ -81,11 +83,19 @@ def _api_call(method: str, url: str, token: str, bus, action: str):
             bus.emit("speak", resp(msg_map.get(action, "spotify_ok")))
         elif status == 401:
             _refresh_token()
+            with _token_lock:
+                new_token = _token_cache.get("access_token", token)
+            if new_token != token:
+                _api_call(method, url, new_token, bus, action)
         else:
             bus.emit("speak", resp("spotify_error"))
     except urllib.error.HTTPError as e:
         if e.code == 401:
             _refresh_token()
+            with _token_lock:
+                new_token = _token_cache.get("access_token", token)
+            if new_token != token:
+                _api_call(method, url, new_token, bus, action)
         else:
             print(f"[SPOTIFY] API error: {e.code}")
             bus.emit("speak", resp("spotify_error"))
@@ -184,25 +194,26 @@ def _save_token():
 
 def _refresh_token():
     global _token_cache
-    refresh = _token_cache.get("refresh_token", "")
-    if not refresh:
-        return
-    try:
-        creds = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
-        data = f"grant_type=refresh_token&refresh_token={refresh}".encode()
-        req = urllib.request.Request(
-            "https://accounts.spotify.com/api/token",
-            data=data,
-            headers={
-                "Authorization": f"Basic {creds}",
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-        )
-        with urllib.request.urlopen(req, timeout=10) as resp_:
-            result = json.loads(resp_.read().decode("utf-8"))
-            _token_cache["access_token"] = result["access_token"]
-            if "refresh_token" in result:
-                _token_cache["refresh_token"] = result["refresh_token"]
-            _save_token()
-    except Exception as e:
-        print(f"[SPOTIFY] Token refresh failed: {e}")
+    with _token_lock:
+        refresh = _token_cache.get("refresh_token", "")
+        if not refresh:
+            return
+        try:
+            creds = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
+            data = f"grant_type=refresh_token&refresh_token={refresh}".encode()
+            req = urllib.request.Request(
+                "https://accounts.spotify.com/api/token",
+                data=data,
+                headers={
+                    "Authorization": f"Basic {creds}",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp_:
+                result = json.loads(resp_.read().decode("utf-8"))
+                _token_cache["access_token"] = result["access_token"]
+                if "refresh_token" in result:
+                    _token_cache["refresh_token"] = result["refresh_token"]
+                _save_token()
+        except Exception as e:
+            print(f"[SPOTIFY] Token refresh failed: {e}")
