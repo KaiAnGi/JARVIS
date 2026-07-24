@@ -1,8 +1,10 @@
 """system_control plugin - Open apps, manage windows, file explorer."""
 
+import json
 import os
 import shutil
 import subprocess
+from pathlib import Path
 
 import pygetwindow as gw
 
@@ -42,9 +44,51 @@ APPS_URL = {
     "spotify": "https://open.spotify.com",
 }
 
+USER_APPS_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "user_apps.json"
+_user_apps = {"apps": {}, "urls": {}}
+
+APP_ALIASES = {
+    "what that": "wattpad", "what but": "wattpad", "what tap": "wattpad",
+    "what bad": "wattpad", "what pad": "wattpad", "what pads": "wattpad",
+    "gen shin": "genshin", "jen shin": "genshin", "genshin impact": "genshin",
+    "hoyo play": "hoyoplay", "oyo play": "hoyoplay",
+    "five m": "fivem", "5 m": "fivem",
+    "this court": "discord", "this card": "discord", "disk or": "discord",
+    "ob s": "obs", "o b s": "obs",
+    "over wolf": "overwolf", "over walk": "overwolf",
+    "ld player": "ldplayer", "el de player": "ldplayer",
+    "mic tech": "miktex", "my tech": "miktex",
+    "u torrent": "utorrent", "you torrent": "utorrent",
+    "rock star": "rockstar",
+    "oh sue": "osu", "o s u": "osu",
+}
+
+
+def _load_user_apps():
+    """Load user-specific app paths from config/user_apps.json."""
+    global _user_apps
+    if not USER_APPS_PATH.exists():
+        return
+    try:
+        data = json.loads(USER_APPS_PATH.read_text(encoding="utf-8"))
+        _user_apps["apps"].update(data.get("apps", {}))
+        _user_apps["urls"].update(data.get("urls", {}))
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"[SYSTEM_CONTROL] Failed to load user_apps.json: {e}")
+
+
+def _resolve_name(name: str) -> str:
+    """Resolve phonetic misrecognitions and aliases to canonical app name."""
+    if name in APP_ALIASES:
+        return APP_ALIASES[name]
+    for alias, canonical in APP_ALIASES.items():
+        if alias in name:
+            return canonical
+    return name
+
 
 def init(bus):
-    pass
+    _load_user_apps()
 
 
 def handle(action: str, text: str, bus):
@@ -78,6 +122,8 @@ def _open_app(text: str, bus):
         bus.emit("speak", resp("what_open"))
         return
 
+    name = _resolve_name(name)
+
     if name in APPS_URL:
         import webbrowser
         webbrowser.open(APPS_URL[name])
@@ -104,6 +150,27 @@ def _open_app(text: str, bus):
 
     if name in APPS_PATH:
         cmd = APPS_PATH[name]
+        if os.path.isfile(cmd):
+            try:
+                subprocess.Popen([cmd])
+                bus.emit("speak", resp("open_app", name=name))
+            except Exception:
+                bus.emit("speak", resp("open_fail", name=name))
+            return
+
+    if name in _user_apps["urls"]:
+        import webbrowser
+        webbrowser.open(_user_apps["urls"][name])
+        bus.emit("speak", resp("open_app", name=name))
+        return
+
+    if name in _user_apps["apps"]:
+        cmd = _user_apps["apps"][name]
+        if cmd.startswith("http"):
+            import webbrowser
+            webbrowser.open(cmd)
+            bus.emit("speak", resp("open_app", name=name))
+            return
         if os.path.isfile(cmd):
             try:
                 subprocess.Popen([cmd])

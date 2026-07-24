@@ -28,7 +28,8 @@ Available actions and their parameters:
 
 OPEN APP:
   {"action": "open_app", "app": "<app_name>"}
-  Apps: notepad, calculator, paint, explorer, chrome, edge, discord, obs, winrar, office, word, excel, powerpoint, vs code, vscode, whatsapp, spotify
+  Known apps: notepad, calculator, paint, explorer, chrome, edge, discord, obs, winrar, office, word, excel, powerpoint, vs code, whatsapp, spotify
+  The system can also open any installed app or website by name
 
 WEB SEARCH:
   {"action": "web_search", "query": "<search_query>"}

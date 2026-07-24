@@ -5,6 +5,9 @@ config/.env
 **/token.json
 **/token.pickle
 
+# User-specific config
+config/user_apps.json
+
 # Python
 __pycache__/
 *.py[cod]
