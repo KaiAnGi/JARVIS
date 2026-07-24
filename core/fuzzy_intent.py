@@ -28,7 +28,7 @@ Available actions and their parameters:
 
 OPEN APP:
   {"action": "open_app", "app": "<app_name>"}
-  Apps: notepad, calculator, paint, explorer, chrome, edge, steam, discord, epic games, ea, rockstar, winrar, minecraft, unity, intellij, obs, office, word, excel, powerpoint, vs code, vscode, wattpad, whatsapp, spotify
+  Apps: notepad, calculator, paint, explorer, chrome, edge, discord, obs, winrar, office, word, excel, powerpoint, vs code, vscode, whatsapp, spotify
 
 WEB SEARCH:
   {"action": "web_search", "query": "<search_query>"}
