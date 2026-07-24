@@ -35,3 +35,8 @@ models/
 
 # Logs
 *.log
+
+# User data
+data/jarvis.db
+data/favorites.json
+data/screenshots/
