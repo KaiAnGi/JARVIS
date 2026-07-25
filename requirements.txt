@@ -1,17 +1,30 @@
+# Full installation — all extras
+# For CI testing, use: pip install .[test]
+-r requirements-test.txt
+
+# Runtime
+python-dotenv>=1.0
+numpy>=1.24
+noisereduce>=3.0
+
+# Audio
 vosk==0.3.45
 pyaudio==0.2.14
 openwakeword==0.6.0
+
+# GUI
+PyQt6==6.11.0
+pystray==0.19.5
+Pillow==12.3.0
+
+# Windows
 pywin32==312
 pygetwindow==0.0.9
 pyautogui==0.9.54
+
+# Plugins
 gitpython==3.1.53
 google-api-python-client==2.198.0
 google-auth-httplib2==0.4.0
 google-auth-oauthlib==1.4.0
-python-dotenv==1.2.2
-PyQt6==6.11.0
-pystray==0.19.5
-Pillow==12.3.0
-noisereduce==3.0.3
-numpy==2.5.1
 pyperclip==1.11.0
