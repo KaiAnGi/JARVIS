@@ -103,17 +103,17 @@ def handle(action: str, text: str, bus):
         bus.emit("speak", resp("time", time=now))
 
     elif action == "get_date":
-        now = datetime.now()
+        current = datetime.now()
         from core.language import get_lang
 
         if get_lang() == "es":
-            day = _DAYS_ES.get(now.strftime("%A"), now.strftime("%A"))
-            month = _MONTHS_ES.get(now.strftime("%B"), now.strftime("%B"))
-            date_str = f"{now.day} de {month} de {now.year}"
+            day = _DAYS_ES.get(current.strftime("%A"), current.strftime("%A"))
+            month = _MONTHS_ES.get(current.strftime("%B"), current.strftime("%B"))
+            date_str = f"{current.day} de {month} de {current.year}"
             bus.emit("speak", resp("date", day=day, date=date_str))
         else:
-            date_str = now.strftime("%B %d, %Y")
-            bus.emit("speak", resp("date", day=now.strftime("%A"), date=date_str))
+            date_str = current.strftime("%B %d, %Y")
+            bus.emit("speak", resp("date", day=current.strftime("%A"), date=date_str))
 
     elif action == "calculate":
         result = _calculate(text)

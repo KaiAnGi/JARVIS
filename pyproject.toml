@@ -70,7 +70,6 @@ module = [
     "pyaudio.*",
     "pyautogui.*",
     "pygetwindow.*",
-    "pystray.*",
     "git.*",
     "googleapiclient.*",
     "google_auth_oauthlib.*",
@@ -79,19 +78,8 @@ module = [
     "numpy.*",
     "pyperclip.*",
     "openwakeword.*",
-    "PyQt6.*",
-    "PyQt6.QtCore.*",
-    "PyQt6.QtGui.*",
-    "PyQt6.QtWidgets.*",
 ]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = [
-    "gui.*",
-    "pystray.*",
-]
-ignore_errors = true
 
 [tool.coverage.run]
 source = ["core", "plugins"]

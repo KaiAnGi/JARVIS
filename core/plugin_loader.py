@@ -20,6 +20,9 @@ def load_plugins(bus, router):
 
         try:
             spec = importlib.util.spec_from_file_location(name, plugin_path)
+            if spec is None or spec.loader is None:
+                print(f"[PLUGIN] Cannot create spec for {name}")
+                continue
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
