@@ -7,6 +7,7 @@ import webbrowser
 from urllib.parse import quote_plus
 
 from core.language import resp
+from core.text_utils import extract_after_keyword
 
 _waiting_youtube = False
 _waiting_youtube_ts = 0.0
@@ -35,7 +36,7 @@ def handle(action: str, text: str, bus):
             return
 
     if action == "web_search":
-        query = _extract_query(text, ("search for", "search", "google", "look up", "buscar", "busca"))
+        query = extract_after_keyword(text, ("search for", "search", "google", "look up", "buscar", "busca"))
         if query:
             webbrowser.open(f"https://www.google.com/search?q={quote_plus(query)}")
             bus.emit("speak", resp("search_google", query=query))
@@ -43,7 +44,7 @@ def handle(action: str, text: str, bus):
             bus.emit("speak", resp("what_search"))
 
     elif action == "youtube_search":
-        query = _extract_query(text, ("youtube", "you tube", "on youtube", "en youtube"))
+        query = extract_after_keyword(text, ("youtube", "you tube", "on youtube", "en youtube"))
         if query:
             _do_youtube_search(query, bus)
         else:
@@ -52,7 +53,7 @@ def handle(action: str, text: str, bus):
             bus.emit("speak", resp("what_youtube"))
 
     elif action == "youtube_play":
-        query = _extract_query(text, ("play on youtube", "play", "youtube",
+        query = extract_after_keyword(text, ("play on youtube", "play", "youtube",
                                        "reproduce en youtube", "reproducir en youtube"))
         if query:
             _do_youtube_search(query, bus)
@@ -62,14 +63,13 @@ def handle(action: str, text: str, bus):
             bus.emit("speak", resp("what_play"))
 
     elif action == "open_url":
-        url = text.lower()
-        for prefix in ("open website", "abre sitio web", "abre página"):
-            if prefix in url:
-                url = url.split(prefix, 1)[1].strip()
-                break
+        url = extract_after_keyword(text.lower(), ("open website", "abre sitio web", "abre página"))
         if url:
             if not url.startswith("http"):
                 url = "https://" + url
+            if not _is_valid_url(url):
+                bus.emit("speak", resp("what_url"))
+                return
             webbrowser.open(url)
             bus.emit("speak", resp("open_url", url=url))
         else:
@@ -98,11 +98,18 @@ def _open_first_video(query: str):
         webbrowser.open(f"https://www.youtube.com/results?search_query={quote_plus(query)}")
 
 
-def _extract_query(text: str, prefixes: tuple) -> str:
-    text = text.lower()
-    for prefix in sorted(prefixes, key=len, reverse=True):
-        if prefix in text:
-            query = text.split(prefix, 1)[1].strip()
-            if query:
-                return query
-    return ""
+def _is_valid_url(url: str) -> bool:
+    """Basic URL validation — checks scheme and that there's a domain with TLD."""
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return False
+        host = parsed.hostname or ""
+        if not host or "." not in host:
+            return False
+        if len(host) < 3:
+            return False
+        return True
+    except Exception:
+        return False

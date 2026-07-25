@@ -2,6 +2,7 @@
 
 import pyperclip
 from core.language import resp
+from core.text_utils import extract_after_keyword
 
 
 def init(bus):
@@ -34,8 +35,6 @@ def handle(action: str, text: str, bus):
         try:
             content = pyperclip.paste()
             if content:
-                import pyperclip as pc
-                pc.copy(content)
                 import pyautogui
                 pyautogui.hotkey("ctrl", "v")
                 bus.emit("speak", resp("clipboard_pasted"))
@@ -46,11 +45,4 @@ def handle(action: str, text: str, bus):
 
 
 def _extract_text(text: str, keywords: tuple) -> str:
-    lower = text.lower()
-    for kw in keywords:
-        idx = lower.find(kw)
-        if idx != -1:
-            after = text[idx + len(kw):].strip()
-            if after:
-                return after
-    return ""
+    return extract_after_keyword(text, keywords)

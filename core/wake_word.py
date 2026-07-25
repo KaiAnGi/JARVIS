@@ -1,7 +1,6 @@
 """Wake word detection using openWakeWord."""
 
 import os
-import struct
 import numpy as np
 import pyaudio
 from openwakeword.model import Model

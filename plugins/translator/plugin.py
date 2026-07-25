@@ -4,6 +4,7 @@ import json
 import urllib.request
 from urllib.parse import quote_plus
 from core.language import resp
+from core.text_utils import extract_after_keyword
 
 GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
 
@@ -21,14 +22,14 @@ def handle(action: str, text: str, bus):
             bus.emit("speak", resp("translate_what"))
 
     elif action == "translate_to_english":
-        content = _extract_content(text, ("translate to english", "traduce al inglés", "traducir al inglés"))
+        content = extract_after_keyword(text, ("translate to english", "traduce al inglés", "traducir al inglés"))
         if content:
             _do_translate(content, "auto", "en", bus)
         else:
             bus.emit("speak", resp("translate_what"))
 
     elif action == "translate_to_spanish":
-        content = _extract_content(text, ("translate to spanish", "traduce al español", "traducir al español"))
+        content = extract_after_keyword(text, ("translate to spanish", "traduce al español", "traducir al español"))
         if content:
             _do_translate(content, "auto", "es", bus)
         else:
@@ -68,17 +69,6 @@ def _parse_translate(text: str) -> dict | None:
             if content and lang_code:
                 return {"text": content, "src": "auto", "dest": lang_code}
     return None
-
-
-def _extract_content(text: str, keywords: tuple) -> str:
-    lower = text.lower()
-    for kw in keywords:
-        idx = lower.find(kw)
-        if idx != -1:
-            after = text[idx + len(kw):].strip()
-            if after:
-                return after
-    return ""
 
 
 def _lang_name_to_code(name: str) -> str:

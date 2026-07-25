@@ -6,6 +6,7 @@ import threading
 import urllib.request
 import base64
 from core.language import resp
+from core.text_utils import extract_after_keyword
 
 CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
@@ -56,14 +57,14 @@ def handle(action: str, text: str, bus):
     elif action == "spotify_status":
         _get_current_track(token, bus)
     elif action == "spotify_play":
-        query = _extract_query(text, ("play", "reproduce", "pon", "play on spotify", "reproduce en spotify"))
+        query = extract_after_keyword(text, ("play", "reproduce", "pon", "play on spotify", "reproduce en spotify"))
         if query:
             _search_and_play(query, token, bus)
         else:
             _api_call("PUT", "https://api.spotify.com/v1/player/play", token, bus, action)
 
 
-def _api_call(method: str, url: str, token: str, bus, action: str):
+def _api_call(method: str, url: str, token: str, bus, action: str, _retried: bool = False):
     try:
         req = urllib.request.Request(url, method=method)
         req.add_header("Authorization", f"Bearer {token}")
@@ -81,21 +82,21 @@ def _api_call(method: str, url: str, token: str, bus, action: str):
                 "spotify_play": "spotify_playing",
             }
             bus.emit("speak", resp(msg_map.get(action, "spotify_ok")))
-        elif status == 401:
+        elif status == 401 and not _retried:
             _refresh_token()
             with _token_lock:
                 new_token = _token_cache.get("access_token", token)
             if new_token != token:
-                _api_call(method, url, new_token, bus, action)
+                _api_call(method, url, new_token, bus, action, _retried=True)
         else:
             bus.emit("speak", resp("spotify_error"))
     except urllib.error.HTTPError as e:
-        if e.code == 401:
+        if e.code == 401 and not _retried:
             _refresh_token()
             with _token_lock:
                 new_token = _token_cache.get("access_token", token)
             if new_token != token:
-                _api_call(method, url, new_token, bus, action)
+                _api_call(method, url, new_token, bus, action, _retried=True)
         else:
             print(f"[SPOTIFY] API error: {e.code}")
             bus.emit("speak", resp("spotify_error"))
@@ -157,17 +158,6 @@ def _extract_volume(text: str) -> int | None:
     return None
 
 
-def _extract_query(text: str, keywords: tuple) -> str:
-    lower = text.lower()
-    for kw in keywords:
-        idx = lower.find(kw)
-        if idx != -1:
-            after = text[idx + len(kw):].strip()
-            if after:
-                return after
-    return ""
-
-
 def _get_token() -> str:
     return _token_cache.get("access_token", "")
 
@@ -176,7 +166,8 @@ def _load_token():
     global _token_cache
     if TOKEN_PATH and os.path.exists(TOKEN_PATH):
         try:
-            data = json.loads(open(TOKEN_PATH).read())
+            with open(TOKEN_PATH) as f:
+                data = json.load(f)
             _token_cache = data
         except Exception:
             pass
