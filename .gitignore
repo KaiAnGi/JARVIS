@@ -17,6 +17,20 @@ dist/
 build/
 *.egg
 
+# Tool caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Coverage
+htmlcov/
+coverage.xml
+.coverage
+.coverage.*
+
+# Test results
+*.xml
+
 # Virtual environment
 .venv/
 venv/
