@@ -2,6 +2,10 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+pytest.importorskip("git", reason="GitPython not installed")
+
 from plugins.git_control import plugin
 
 
