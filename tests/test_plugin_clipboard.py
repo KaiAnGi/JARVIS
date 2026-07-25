@@ -2,6 +2,10 @@
 
 from unittest.mock import patch
 
+import pytest
+
+pytest.importorskip("pyperclip", reason="pyperclip not installed")
+
 from core.language import set_lang
 from plugins.clipboard import plugin
 

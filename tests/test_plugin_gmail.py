@@ -3,6 +3,10 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+pytest.importorskip("googleapiclient", reason="google-api-python-client not installed")
+
 from core.language import set_lang
 from plugins.gmail import plugin
 
