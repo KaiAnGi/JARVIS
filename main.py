@@ -1,4 +1,4 @@
-"""Jarvis Voice Assistant - Entry point."""
+"""Jarvis Voice Assistant - CLI entry point."""
 
 from core.config import load_env
 load_env()
@@ -6,25 +6,12 @@ load_env()
 import threading
 import time
 
-from core.event_bus import EventBus
-from core.audio_input import SpeechRecognizer
-from core.audio_output import Speaker
-from core.intent_router import IntentRouter
-from core.plugin_loader import load_plugins
-from core.wake_word import WakeWordDetector
+from core.bootstrap import create_context
 
 
 def main():
-    bus = EventBus()
-    router = IntentRouter()
-
-    speaker = Speaker()
+    bus, router, speaker, recognizer, wake_detector = create_context()
     bus.subscribe("speak", lambda text: speaker.speak(text))
-
-    load_plugins(bus, router)
-
-    recognizer = SpeechRecognizer()
-    wake_detector = WakeWordDetector(wake_words=["hey_jarvis"], threshold=0.5)
 
     stop = threading.Event()
 

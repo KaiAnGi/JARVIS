@@ -1,5 +1,6 @@
 """JSON-based favorites system for frequently used commands."""
 
+import copy
 import json
 from pathlib import Path
 
@@ -19,7 +20,7 @@ def _load() -> dict:
             return json.loads(FAVORITES_PATH.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             pass
-    return DEFAULT_FAVORITES.copy()
+    return copy.deepcopy(DEFAULT_FAVORITES)
 
 
 def _save(data: dict):

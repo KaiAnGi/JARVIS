@@ -10,6 +10,7 @@ _alarms = []
 _alarms_lock = threading.Lock()
 _timer_thread = None
 _timer_cancel = threading.Event()
+_stopwatch_lock = threading.Lock()
 _stopwatch_start = None
 _stopwatch_running = False
 _stopwatch_elapsed = timedelta(0)
@@ -201,24 +202,26 @@ def _stop_timer(bus):
 def _start_stopwatch(bus):
     global _stopwatch_start, _stopwatch_running, _stopwatch_elapsed
 
-    if _stopwatch_running:
-        bus.emit("speak", resp("stopwatch_running"))
-        return
+    with _stopwatch_lock:
+        if _stopwatch_running:
+            bus.emit("speak", resp("stopwatch_running"))
+            return
 
-    _stopwatch_start = datetime.now() - _stopwatch_elapsed
-    _stopwatch_running = True
+        _stopwatch_start = datetime.now() - _stopwatch_elapsed
+        _stopwatch_running = True
     bus.emit("speak", resp("stopwatch_started"))
 
 
 def _stop_stopwatch(bus):
     global _stopwatch_running, _stopwatch_elapsed
 
-    if not _stopwatch_running:
-        bus.emit("speak", resp("stopwatch_not_running"))
-        return
+    with _stopwatch_lock:
+        if not _stopwatch_running:
+            bus.emit("speak", resp("stopwatch_not_running"))
+            return
 
-    _stopwatch_elapsed = datetime.now() - _stopwatch_start
-    _stopwatch_running = False
+        _stopwatch_elapsed = datetime.now() - _stopwatch_start
+        _stopwatch_running = False
     bus.emit("speak", resp("stopwatch_stopped",
                            time=_format_duration(_stopwatch_elapsed)))
 
@@ -226,20 +229,26 @@ def _stop_stopwatch(bus):
 def _reset_stopwatch(bus):
     global _stopwatch_start, _stopwatch_running, _stopwatch_elapsed
 
-    _stopwatch_start = None
-    _stopwatch_running = False
-    _stopwatch_elapsed = timedelta(0)
+    with _stopwatch_lock:
+        _stopwatch_start = None
+        _stopwatch_running = False
+        _stopwatch_elapsed = timedelta(0)
     bus.emit("speak", resp("stopwatch_reset"))
 
 
 def _read_stopwatch(bus):
-    if _stopwatch_running:
-        elapsed = datetime.now() - _stopwatch_start
+    with _stopwatch_lock:
+        running = _stopwatch_running
+        start = _stopwatch_start
+        elapsed = _stopwatch_elapsed
+
+    if running:
+        current = datetime.now() - start
         bus.emit("speak", resp("stopwatch_elapsed",
-                               time=_format_duration(elapsed)))
-    elif _stopwatch_elapsed > timedelta(0):
+                               time=_format_duration(current)))
+    elif elapsed > timedelta(0):
         bus.emit("speak", resp("stopwatch_paused",
-                               time=_format_duration(_stopwatch_elapsed)))
+                               time=_format_duration(elapsed)))
     else:
         bus.emit("speak", resp("stopwatch_not_started"))
 

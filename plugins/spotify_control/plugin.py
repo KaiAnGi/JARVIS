@@ -159,7 +159,8 @@ def _extract_volume(text: str) -> int | None:
 
 
 def _get_token() -> str:
-    return _token_cache.get("access_token", "")
+    with _token_lock:
+        return _token_cache.get("access_token", "")
 
 
 def _load_token():
@@ -168,7 +169,8 @@ def _load_token():
         try:
             with open(TOKEN_PATH) as f:
                 data = json.load(f)
-            _token_cache = data
+            with _token_lock:
+                _token_cache = data
         except Exception:
             pass
 
@@ -177,34 +179,35 @@ def _save_token():
     if TOKEN_PATH:
         try:
             os.makedirs(os.path.dirname(TOKEN_PATH), exist_ok=True)
+            with _token_lock:
+                cache_snapshot = dict(_token_cache)
             with open(TOKEN_PATH, "w") as f:
-                json.dump(_token_cache, f)
+                json.dump(cache_snapshot, f)
         except Exception:
             pass
 
 
 def _refresh_token():
-    global _token_cache
-    with _token_lock:
-        refresh = _token_cache.get("refresh_token", "")
-        if not refresh:
-            return
-        try:
-            creds = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
-            data = f"grant_type=refresh_token&refresh_token={refresh}".encode()
-            req = urllib.request.Request(
-                "https://accounts.spotify.com/api/token",
-                data=data,
-                headers={
-                    "Authorization": f"Basic {creds}",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-            )
-            with urllib.request.urlopen(req, timeout=10) as resp_:
-                result = json.loads(resp_.read().decode("utf-8"))
-                _token_cache["access_token"] = result["access_token"]
-                if "refresh_token" in result:
-                    _token_cache["refresh_token"] = result["refresh_token"]
-                _save_token()
-        except Exception as e:
-            print(f"[SPOTIFY] Token refresh failed: {e}")
+    refresh = _token_cache.get("refresh_token", "")
+    if not refresh:
+        return
+    try:
+        creds = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
+        data = f"grant_type=refresh_token&refresh_token={refresh}".encode()
+        req = urllib.request.Request(
+            "https://accounts.spotify.com/api/token",
+            data=data,
+            headers={
+                "Authorization": f"Basic {creds}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp_:
+            result = json.loads(resp_.read().decode("utf-8"))
+        with _token_lock:
+            _token_cache["access_token"] = result["access_token"]
+            if "refresh_token" in result:
+                _token_cache["refresh_token"] = result["refresh_token"]
+        _save_token()
+    except Exception as e:
+        print(f"[SPOTIFY] Token refresh failed: {e}")
