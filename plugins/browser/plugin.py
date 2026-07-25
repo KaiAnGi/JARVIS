@@ -11,6 +11,7 @@ from core.text_utils import extract_after_keyword
 
 _waiting_youtube = False
 _waiting_youtube_ts = 0.0
+_yt_lock = threading.Lock()
 _YOUTUBE_TIMEOUT = 30.0
 
 
@@ -21,19 +22,34 @@ def init(bus):
 def reset_state():
     """Reset plugin state. Call on new session."""
     global _waiting_youtube, _waiting_youtube_ts
-    _waiting_youtube = False
-    _waiting_youtube_ts = 0.0
+    with _yt_lock:
+        _waiting_youtube = False
+        _waiting_youtube_ts = 0.0
+
+
+def is_waiting_youtube() -> bool:
+    """Thread-safe check for pending YouTube follow-up."""
+    with _yt_lock:
+        if _waiting_youtube:
+            if time.time() - _waiting_youtube_ts > _YOUTUBE_TIMEOUT:
+                return False
+            return True
+        return False
 
 
 def handle(action: str, text: str, bus):
     global _waiting_youtube, _waiting_youtube_ts
 
-    if _waiting_youtube:
-        if time.time() - _waiting_youtube_ts > _YOUTUBE_TIMEOUT:
-            _waiting_youtube = False
-        else:
+    with _yt_lock:
+        waiting = _waiting_youtube
+
+    if waiting:
+        if is_waiting_youtube():
             _do_youtube_search(text, bus)
             return
+        else:
+            with _yt_lock:
+                _waiting_youtube = False
 
     if action == "web_search":
         query = extract_after_keyword(text, ("search for", "search", "google", "look up", "buscar", "busca"))
@@ -48,8 +64,9 @@ def handle(action: str, text: str, bus):
         if query:
             _do_youtube_search(query, bus)
         else:
-            _waiting_youtube = True
-            _waiting_youtube_ts = time.time()
+            with _yt_lock:
+                _waiting_youtube = True
+                _waiting_youtube_ts = time.time()
             bus.emit("speak", resp("what_youtube"))
 
     elif action == "youtube_play":
@@ -58,8 +75,9 @@ def handle(action: str, text: str, bus):
         if query:
             _do_youtube_search(query, bus)
         else:
-            _waiting_youtube = True
-            _waiting_youtube_ts = time.time()
+            with _yt_lock:
+                _waiting_youtube = True
+                _waiting_youtube_ts = time.time()
             bus.emit("speak", resp("what_play"))
 
     elif action == "open_url":
@@ -78,7 +96,8 @@ def handle(action: str, text: str, bus):
 
 def _do_youtube_search(query: str, bus):
     global _waiting_youtube
-    _waiting_youtube = False
+    with _yt_lock:
+        _waiting_youtube = False
     threading.Thread(target=_open_first_video, args=(query,), daemon=True).start()
     bus.emit("speak", resp("play_youtube", query=query))
 

@@ -2,7 +2,6 @@
 
 import json
 import struct
-import sys
 import threading
 from pathlib import Path
 
@@ -20,6 +19,10 @@ except ImportError:
 
 ENERGY_THRESHOLD = 500        # Minimum RMS energy to detect speech
 PROP_DECREASE = 0.8           # Noise reduction strength (0=no reduction, 1=full)
+
+
+class ModelNotFoundError(Exception):
+    """Raised when a Vosk speech model is not found on disk."""
 
 
 class SpeechRecognizer:
@@ -44,10 +47,10 @@ class SpeechRecognizer:
     def _load_model(self, name: str) -> Model:
         path = self.MODEL_DIR / name
         if not path.exists():
-            print(f"[AUDIO] Vosk model not found at: {path}")
-            print("[AUDIO] Download from: https://alphacephei.com/vosk/models")
-            print(f"[AUDIO] Extract the zip into: {self.MODEL_DIR}/")
-            sys.exit(1)
+            raise ModelNotFoundError(
+                f"Vosk model not found at: {path}. "
+                "Download from https://alphacephei.com/vosk/models and extract into the models/ directory."
+            )
         return Model(str(path))
 
     def _get_model(self, lang: str = None) -> Model:

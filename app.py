@@ -1,4 +1,4 @@
-"""Jarvis Desktop Application - Entry point."""
+"""Jarvis Desktop Application - GUI entry point."""
 
 from core.config import load_env
 load_env()
@@ -9,26 +9,13 @@ import threading
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QTimer
 
-from core.event_bus import EventBus
-from core.audio_input import SpeechRecognizer
-from core.audio_output import Speaker
-from core.intent_router import IntentRouter
-from core.plugin_loader import load_plugins
-from core.wake_word import WakeWordDetector
-
+from core.bootstrap import create_context
 from gui.main_window import JarvisWindow
 from gui.tray import JarvisTray
 
 
 def main():
-    # Core
-    bus = EventBus()
-    router = IntentRouter()
-    speaker = Speaker()
-    recognizer = SpeechRecognizer()
-    wake_detector = WakeWordDetector(wake_words=["hey_jarvis_v0.1"], threshold=0.5)
-
-    load_plugins(bus, router)
+    bus, router, speaker, recognizer, wake_detector = create_context()
 
     # Qt App
     app = QApplication(sys.argv)

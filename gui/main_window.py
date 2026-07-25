@@ -80,6 +80,7 @@ class JarvisWindow(QMainWindow):
         self.bus = bus
         self.speaker = speaker
         self.voice_thread = None
+        self._listen_thread = None
         self._session_id = 0
 
         db.init()
@@ -261,6 +262,8 @@ class JarvisWindow(QMainWindow):
         QTimer.singleShot(500, lambda: self.status_router.set_active(False))
 
     def _on_manual_listen(self):
+        if self._listen_thread is not None and self._listen_thread.isRunning():
+            return
         self.arc_reactor.set_listening(True)
         self.status_stt.set_active(True)
         self._log("SYSTEM", ui("listening"))
@@ -273,8 +276,12 @@ class JarvisWindow(QMainWindow):
             self.arc_reactor.set_listening(False)
             self.status_stt.set_active(False)
 
-        thread = QThread(target=listen_in_thread)
-        thread.start()
+        self._listen_thread = QThread(target=listen_in_thread)
+        self._listen_thread.finished.connect(self._on_listen_finished)
+        self._listen_thread.start()
+
+    def _on_listen_finished(self):
+        self._listen_thread = None
 
     def start_voice_thread(self):
         self.voice_thread = VoiceThread(
@@ -321,7 +328,7 @@ class JarvisWindow(QMainWindow):
         try:
             handled = self.router.route(text, self.bus)
         except Exception as e:
-            logger.error(f"Routing error: {e}")
+            logger.log_error("Router", str(e))
             from core.language import resp
             self.bus.emit("speak", resp("error"))
             handled = False
@@ -330,7 +337,7 @@ class JarvisWindow(QMainWindow):
         db.save_command(action, text, success=handled, duration_ms=elapsed)
         if not handled:
             browser = self.router._plugins.get("browser")
-            if browser and hasattr(browser, "_waiting_youtube") and browser._waiting_youtube:
+            if browser and hasattr(browser, "is_waiting_youtube") and browser.is_waiting_youtube():
                 browser.handle("youtube_search", text, self.bus)
             else:
                 from core.language import resp
@@ -353,7 +360,7 @@ class JarvisWindow(QMainWindow):
                 return
             self._execute_fuzzy_action(result)
         except Exception as e:
-            print(f"[FUZZY] Error: {e}")
+            logger.log_error("FuzzyIntent", str(e))
             from core.language import resp
             self.bus.emit("speak", resp("no_match"))
 
@@ -439,5 +446,8 @@ class JarvisWindow(QMainWindow):
 
     def closeEvent(self, event):
         logger.log_event("SYSTEM", "J.A.R.V.I.S. shutting down")
+        if self._listen_thread is not None and self._listen_thread.isRunning():
+            self._listen_thread.quit()
+            self._listen_thread.wait(2000)
         event.ignore()
         self.hide()
