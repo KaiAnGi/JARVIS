@@ -1,13 +1,13 @@
 """Jarvis Desktop Application - GUI entry point."""
 
 from core.config import load_env
+
 load_env()
 
 import sys
 import threading
 
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QTimer
 
 from core.bootstrap import create_context
 from gui.main_window import JarvisWindow

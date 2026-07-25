@@ -32,9 +32,9 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-test.txt
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          python -m pytest tests/ -v --tb=long --junitxml=results.xml
+          python -m pytest tests/ -v --tb=long --junitxml=results.xml --cov=core --cov=plugins --cov-report=xml:coverage.xml --cov-report=term-missing
 
       - name: Upload test results
         if: always()
@@ -42,3 +42,11 @@ jobs:
         with:
           name: test-results-py${{ matrix.python-version }}
           path: results.xml
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}

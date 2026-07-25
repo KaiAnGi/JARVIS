@@ -6,7 +6,7 @@ from pathlib import Path
 
 FAVORITES_PATH = Path(__file__).resolve().parent.parent / "data" / "favorites.json"
 
-DEFAULT_FAVORITES = {
+DEFAULT_FAVORITES: dict[str, dict] = {
     "apps": {},
     "searches": {},
     "commands": {},
@@ -106,7 +106,7 @@ def search(query: str) -> list[dict]:
     for key, val in data.get("apps", {}).items():
         if q in key:
             results.append({"type": "app", "name": key, "path": val["path"]})
-    for key, val in data.get("searches", {}).items():
+    for key, _val in data.get("searches", {}).items():
         if q in key:
             results.append({"type": "search", "query": key})
     return results

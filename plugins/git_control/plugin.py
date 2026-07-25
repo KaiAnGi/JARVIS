@@ -2,11 +2,10 @@
 
 from pathlib import Path
 
-from git import Repo, InvalidGitRepositoryError
+from git import InvalidGitRepositoryError, Repo
 
 from core.language import resp
 from core.text_utils import extract_after_keyword
-
 
 REPO_PATH = Path.cwd()
 
@@ -86,7 +85,6 @@ def handle(action: str, text: str, bus):
 
 
 def _execute_commit(repo, msg: str, count: int, bus):
-    repo.index.add([f for f in repo.untracked_files] +
-                   [item.a_path for item in repo.index.diff(None)])
+    repo.index.add([f for f in repo.untracked_files] + [item.a_path for item in repo.index.diff(None)])
     repo.index.commit(msg)
     bus.emit("speak", resp("git_committed", msg=msg))

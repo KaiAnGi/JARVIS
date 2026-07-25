@@ -1,7 +1,7 @@
 """command_history plugin - Voice access to command history."""
 
 from core.database import get_command_history
-from core.language import resp, get_lang
+from core.language import resp
 
 
 def init(bus):
@@ -13,9 +13,7 @@ def handle(action: str, text: str, bus):
         commands = get_command_history(limit=1)
         if commands:
             c = commands[0]
-            bus.emit("speak", resp("last_command",
-                                   action=c["action"],
-                                   text=c["parameters"]))
+            bus.emit("speak", resp("last_command", action=c["action"], text=c["parameters"]))
         else:
             bus.emit("speak", resp("history_empty"))
 
@@ -31,6 +29,7 @@ def handle(action: str, text: str, bus):
 
     elif action == "clear_history":
         from core.database import _connect
+
         with _connect() as conn:
             conn.execute("DELETE FROM commands")
         bus.emit("speak", resp("history_cleared"))

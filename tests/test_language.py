@@ -1,8 +1,14 @@
 """Tests for core/language.py"""
 
 from core.language import (
-    get_lang, set_lang, toggle_lang, ui, resp,
-    patterns_for, all_patterns, is_goodbye,
+    all_patterns,
+    get_lang,
+    is_goodbye,
+    patterns_for,
+    resp,
+    set_lang,
+    toggle_lang,
+    ui,
 )
 
 
@@ -55,11 +61,13 @@ class TestResp:
 
     def test_resp_all_keys_exist_es(self):
         from core.language import RESPONSES
+
         for key in RESPONSES["es"]:
             resp(key)
 
     def test_resp_all_keys_exist_en(self):
         from core.language import RESPONSES
+
         set_lang("en")
         for key in RESPONSES["en"]:
             resp(key)
@@ -84,8 +92,8 @@ class TestPatterns:
     def test_all_patterns_current_lang(self):
         set_lang("es")
         result = all_patterns()
-        for plugin, actions in result.items():
-            for action, patterns in actions.items():
+        for _plugin, actions in result.items():
+            for _action, patterns in actions.items():
                 assert isinstance(patterns, list)
 
 

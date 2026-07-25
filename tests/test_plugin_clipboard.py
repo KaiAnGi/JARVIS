@@ -1,6 +1,6 @@
 """Tests for plugins/clipboard/plugin.py"""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from core.language import set_lang
 from plugins.clipboard import plugin
@@ -31,7 +31,7 @@ class TestHandle:
         set_lang("es")
         plugin.handle("clipboard_read", "", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     @patch("plugins.clipboard.plugin.pyperclip.copy")
@@ -40,7 +40,7 @@ class TestHandle:
         plugin.handle("clipboard_copy", "copy hello world", bus)
         mock_copy.assert_called_once_with("hello world")
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     def test_copy_nothing(self, bus):
@@ -57,7 +57,7 @@ class TestHandle:
         set_lang("es")
         plugin.handle("clipboard_copy", "copy something", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     @patch("pyautogui.hotkey")
@@ -71,7 +71,7 @@ class TestHandle:
         set_lang("es")
         plugin.handle("clipboard_paste", "", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     @patch("plugins.clipboard.plugin.pyperclip.paste", side_effect=Exception("error"))
@@ -79,7 +79,7 @@ class TestHandle:
         set_lang("es")
         plugin.handle("clipboard_paste", "", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     @patch("plugins.clipboard.plugin.pyperclip.paste", return_value="a" * 300)

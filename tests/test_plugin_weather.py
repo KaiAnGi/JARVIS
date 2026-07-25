@@ -1,7 +1,7 @@
 """Tests for plugins/weather/plugin.py"""
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from core.language import set_lang
 from plugins.weather import plugin
@@ -60,22 +60,24 @@ class TestHandle:
     @patch("plugins.weather.plugin.urllib.request.urlopen")
     def test_get_weather_city_found(self, mock_urlopen, bus):
         geo_resp = MagicMock()
-        geo_resp.read.return_value = json.dumps({
-            "results": [{"latitude": 40.4, "longitude": -3.7, "name": "Madrid"}]
-        }).encode()
+        geo_resp.read.return_value = json.dumps(
+            {"results": [{"latitude": 40.4, "longitude": -3.7, "name": "Madrid"}]}
+        ).encode()
         geo_resp.__enter__ = lambda s: s
         geo_resp.__exit__ = MagicMock(return_value=False)
 
         wx_resp = MagicMock()
-        wx_resp.read.return_value = json.dumps({
-            "current": {
-                "temperature_2m": 22,
-                "apparent_temperature": 20,
-                "relative_humidity_2m": 45,
-                "weather_code": 0,
-                "wind_speed_10m": 3.6,
+        wx_resp.read.return_value = json.dumps(
+            {
+                "current": {
+                    "temperature_2m": 22,
+                    "apparent_temperature": 20,
+                    "relative_humidity_2m": 45,
+                    "weather_code": 0,
+                    "wind_speed_10m": 3.6,
+                }
             }
-        }).encode()
+        ).encode()
         wx_resp.__enter__ = lambda s: s
         wx_resp.__exit__ = MagicMock(return_value=False)
 
@@ -107,7 +109,7 @@ class TestHandle:
         mock_urlopen.side_effect = Exception("network down")
         plugin.handle("get_weather_city", "weather in Madrid", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     def test_get_weather_default_city(self, bus):

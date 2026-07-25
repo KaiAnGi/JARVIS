@@ -1,8 +1,7 @@
 """Custom HUD widgets for Jarvis GUI."""
 
-import math
-from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient, QFont
+from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer
+from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QRadialGradient
 from PyQt6.QtWidgets import QWidget
 
 from gui.styles import PRIMARY_COLOR, SECONDARY_COLOR, TEXT_COLOR
@@ -66,10 +65,10 @@ class ArcReactor(QWidget):
         painter.setPen(arc_pen)
 
         rect = QRectF(cx - radius + 15, cy - radius + 15, (radius - 15) * 2, (radius - 15) * 2)
-        painter.drawArc(rect, int(self._angle * 16), int(90 * 16))
+        painter.drawArc(rect, int(self._angle * 16), (90 * 16))
 
         rect2 = QRectF(cx - radius + 25, cy - radius + 25, (radius - 25) * 2, (radius - 25) * 2)
-        painter.drawArc(rect2, int(-self._angle * 16 + 180 * 16), int(60 * 16))
+        painter.drawArc(rect2, int(-self._angle * 16 + 180 * 16), (60 * 16))
 
         # Inner circle
         inner_radius = radius * 0.4

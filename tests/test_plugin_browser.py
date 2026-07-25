@@ -1,6 +1,6 @@
 """Tests for plugins/browser/plugin.py"""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from plugins.browser import plugin
 

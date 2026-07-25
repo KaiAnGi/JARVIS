@@ -1,7 +1,7 @@
 """Tests for plugins/discord_notify/plugin.py"""
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from core.language import set_lang
 from plugins.discord_notify import plugin
@@ -24,7 +24,7 @@ class TestHandle:
         set_lang("en")
         plugin.handle("discord_send", "send to discord hello", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     @patch("plugins.discord_notify.plugin.WEBHOOK_URL", "https://hooks.example.com/test")
@@ -39,7 +39,7 @@ class TestHandle:
 
         plugin.handle("discord_send", "send to discord hello world", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
         # Verify the webhook was called with the correct payload
         call_args = mock_urlopen.call_args
@@ -65,7 +65,7 @@ class TestHandle:
         mock_urlopen.side_effect = Exception("network error")
         plugin.handle("discord_send", "send to discord test", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     @patch("plugins.discord_notify.plugin.WEBHOOK_URL", "https://hooks.example.com/test")

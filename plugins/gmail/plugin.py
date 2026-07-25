@@ -1,11 +1,11 @@
 """gmail plugin - Read, send, delete, and schedule emails via Gmail API."""
 
+import base64
 import threading
 import time
 from datetime import datetime, timedelta
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import base64
+from email.mime.text import MIMEText
 
 from googleapiclient.discovery import build
 
@@ -20,7 +20,7 @@ SCOPES = [
 ]
 
 _service = None
-_scheduled_emails = []
+_scheduled_emails: list[dict] = []
 _pending_confirm = None
 
 
@@ -75,45 +75,39 @@ def _handle(action: str, text: str, bus):
         return
 
     if action == "count_email":
-        results = service.users().messages().list(
-            userId="me", maxResults=5, labelIds=["INBOX", "UNREAD"]
-        ).execute()
+        results = service.users().messages().list(userId="me", maxResults=5, labelIds=["INBOX", "UNREAD"]).execute()
         count = len(results.get("messages", []))
         bus.emit("speak", resp("count_email", count=count))
 
     elif action == "check_email":
-        results = service.users().messages().list(
-            userId="me", maxResults=3, labelIds=["INBOX"]
-        ).execute()
+        results = service.users().messages().list(userId="me", maxResults=3, labelIds=["INBOX"]).execute()
         messages = results.get("messages", [])
         if not messages:
             bus.emit("speak", resp("no_email"))
             return
         summaries = []
         for msg in messages:
-            m = service.users().messages().get(
-                userId="me", id=msg["id"], format="metadata",
-                metadataHeaders=["Subject", "From"]
-            ).execute()
+            m = (
+                service.users()
+                .messages()
+                .get(userId="me", id=msg["id"], format="metadata", metadataHeaders=["Subject", "From"])
+                .execute()
+            )
             headers = {h["name"]: h["value"] for h in m.get("payload", {}).get("headers", [])}
             summaries.append(f"{headers.get('From', '?')}: {headers.get('Subject', '?')}")
         bus.emit("speak", resp("check_email", emails="; ".join(summaries)))
 
     elif action == "read_email":
-        results = service.users().messages().list(
-            userId="me", maxResults=1, labelIds=["INBOX"]
-        ).execute()
+        results = service.users().messages().list(userId="me", maxResults=1, labelIds=["INBOX"]).execute()
         messages = results.get("messages", [])
         if not messages:
             bus.emit("speak", resp("no_read"))
             return
-        m = service.users().messages().get(
-            userId="me", id=messages[0]["id"], format="full"
-        ).execute()
+        m = service.users().messages().get(userId="me", id=messages[0]["id"], format="full").execute()
         headers = {h["name"]: h["value"] for h in m.get("payload", {}).get("headers", [])}
-        bus.emit("speak", resp("read_email",
-                                **{"from": headers.get("From", "?"),
-                                   "subject": headers.get("Subject", "?")}))
+        bus.emit(
+            "speak", resp("read_email", **{"from": headers.get("From", "?"), "subject": headers.get("Subject", "?")})
+        )
 
     elif action == "delete_email":
         _delete_email(service, text, bus)
@@ -132,13 +126,9 @@ def _delete_email(service, text: str, bus):
     query = extract_after_keyword(text_lower, ("delete email", "borra correo", "eliminar correo", "delete mail"))
 
     if query:
-        results = service.users().messages().list(
-            userId="me", maxResults=5, q=query, labelIds=["INBOX"]
-        ).execute()
+        results = service.users().messages().list(userId="me", maxResults=5, q=query, labelIds=["INBOX"]).execute()
     else:
-        results = service.users().messages().list(
-            userId="me", maxResults=1, labelIds=["INBOX"]
-        ).execute()
+        results = service.users().messages().list(userId="me", maxResults=1, labelIds=["INBOX"]).execute()
 
     messages = results.get("messages", [])
     if not messages:
@@ -147,10 +137,7 @@ def _delete_email(service, text: str, bus):
 
     msg_id = messages[0]["id"]
 
-    m = service.users().messages().get(
-        userId="me", id=msg_id, format="metadata",
-        metadataHeaders=["Subject"]
-    ).execute()
+    m = service.users().messages().get(userId="me", id=msg_id, format="metadata", metadataHeaders=["Subject"]).execute()
     subject = "?"
     for h in m.get("payload", {}).get("headers", []):
         if h["name"] == "Subject":
@@ -195,9 +182,7 @@ def _execute_send(service, to: str, subject: str, body: str, bus):
     message.attach(MIMEText(body, "plain"))
 
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
-    service.users().messages().send(
-        userId="me", body={"raw": raw}
-    ).execute()
+    service.users().messages().send(userId="me", body={"raw": raw}).execute()
 
     bus.emit("speak", resp("email_sent", to=to))
 
@@ -244,16 +229,13 @@ def _schedule_email(service, text: str, bus):
         message["subject"] = subject
         message.attach(MIMEText(body, "plain"))
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
-        service.users().messages().send(
-            userId="me", body={"raw": raw}
-        ).execute()
+        service.users().messages().send(userId="me", body={"raw": raw}).execute()
         bus.emit("speak", resp("email_scheduled_sent", to=to, time=send_time.strftime("%H:%M")))
 
     threading.Thread(target=_send_later, daemon=True).start()
     _scheduled_emails.append({"to": to, "subject": subject, "time": send_time})
 
     bus.emit("speak", resp("email_scheduled", to=to, time=send_time.strftime("%H:%M")))
-
 
 
 def _parse_time(time_str: str):

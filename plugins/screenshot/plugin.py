@@ -1,10 +1,10 @@
 """Screenshot plugin — take screenshots and save them."""
 
-import os
 import time
 from pathlib import Path
 
 import pyautogui
+
 from core.language import resp
 
 SCREENSHOT_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "screenshots"
@@ -21,7 +21,7 @@ def handle(action: str, text: str, bus):
             path = SCREENSHOT_DIR / f"screenshot_{ts}.png"
             pyautogui.screenshot(str(path))
             bus.emit("speak", resp("screenshot_saved", path=str(path)))
-        except Exception as e:
+        except Exception:
             bus.emit("speak", resp("screenshot_error"))
 
     elif action == "screenshot_area":

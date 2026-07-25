@@ -55,6 +55,7 @@ def init():
 
 # ── Conversations ──────────────────────────────────────────────────
 
+
 def save_conversation(role: str, text: str, session_id: int):
     """Save a conversation turn (user or jarvis)."""
     with _connect() as conn:
@@ -91,6 +92,7 @@ def get_conversation_context(session_id: int, limit: int = 10) -> str:
 
 
 # ── Commands ───────────────────────────────────────────────────────
+
 
 def save_command(action: str, parameters: str = "", success: bool = True, duration_ms: float = 0):
     """Log a executed command."""
@@ -140,7 +142,7 @@ def get_stats() -> dict:
     return {
         "total_commands": total,
         "successful": success,
-        "success_rate": f"{(success/total*100):.1f}%" if total else "0%",
+        "success_rate": f"{(success / total * 100):.1f}%" if total else "0%",
         "total_sessions": sessions,
         "first_used": first,
     }

@@ -1,6 +1,7 @@
 """Simple synchronous event bus for inter-component communication."""
 
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 
 
 class EventBus:
@@ -21,6 +22,4 @@ class EventBus:
 
     def unsubscribe(self, event: str, callback: Callable):
         if event in self._subscribers:
-            self._subscribers[event] = [
-                cb for cb in self._subscribers[event] if cb != callback
-            ]
+            self._subscribers[event] = [cb for cb in self._subscribers[event] if cb != callback]

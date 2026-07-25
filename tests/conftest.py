@@ -36,6 +36,7 @@ def bus():
 def reset_language():
     """Reset language to Spanish before each test."""
     from core.language import set_lang
+
     set_lang("es")
     yield
     set_lang("es")
@@ -45,6 +46,7 @@ def reset_language():
 def tmp_db(tmp_path, monkeypatch):
     """Redirect database to a temporary path."""
     import core.database as db
+
     monkeypatch.setattr(db, "DB_DIR", tmp_path)
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "test.db")
     db.init()
@@ -55,6 +57,7 @@ def tmp_db(tmp_path, monkeypatch):
 def tmp_favorites(tmp_path, monkeypatch):
     """Redirect favorites to a temporary path."""
     import core.favorites as fav
+
     fav_path = tmp_path / "favorites.json"
     monkeypatch.setattr(fav, "FAVORITES_PATH", fav_path)
     return fav

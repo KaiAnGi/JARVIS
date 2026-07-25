@@ -1,24 +1,24 @@
 """Core audio input - Offline STT via Vosk with noise reduction."""
 
 import json
-import struct
 import threading
 from pathlib import Path
 
 import numpy as np
 import pyaudio
-from vosk import Model, KaldiRecognizer
+from vosk import KaldiRecognizer, Model
 
 from core.language import MODELS, get_lang
 
 try:
     import noisereduce as nr
+
     _HAS_NR = True
 except ImportError:
     _HAS_NR = False
 
-ENERGY_THRESHOLD = 500        # Minimum RMS energy to detect speech
-PROP_DECREASE = 0.8           # Noise reduction strength (0=no reduction, 1=full)
+ENERGY_THRESHOLD = 500  # Minimum RMS energy to detect speech
+PROP_DECREASE = 0.8  # Noise reduction strength (0=no reduction, 1=full)
 
 
 class ModelNotFoundError(Exception):
@@ -36,9 +36,7 @@ class SpeechRecognizer:
         self._nr = nr if _HAS_NR else None
         self._models = {}
         self._current_lang = get_lang()
-        self._models[self._current_lang] = self._load_model(
-            model_name or MODELS[self._current_lang]
-        )
+        self._models[self._current_lang] = self._load_model(model_name or MODELS[self._current_lang])
         self._pa = pyaudio.PyAudio()
         self._stream = None
         self._rec = None
@@ -68,17 +66,60 @@ class SpeechRecognizer:
         """Detect language from text patterns. Returns lang code or None."""
         text_lower = text.lower()
         es_markers = (
-            "qué", "que", "cómo", "como", "cuál", "cual", "dónde", "donde",
-            "cuándo", "cuando", "cuánto", "cuanto", "por qué", "por que",
-            "necesito", "quiero", "puedes", "puedo", "abre", "busca",
-            "hola", "adiós", "gracias", "ayuda", "alarma", "temporizador",
-            "correo", "calendario", "reproduce", "buscar",
+            "qué",
+            "que",
+            "cómo",
+            "como",
+            "cuál",
+            "cual",
+            "dónde",
+            "donde",
+            "cuándo",
+            "cuando",
+            "cuánto",
+            "cuanto",
+            "por qué",
+            "por que",
+            "necesito",
+            "quiero",
+            "puedes",
+            "puedo",
+            "abre",
+            "busca",
+            "hola",
+            "adiós",
+            "gracias",
+            "ayuda",
+            "alarma",
+            "temporizador",
+            "correo",
+            "calendario",
+            "reproduce",
+            "buscar",
         )
         en_markers = (
-            "what", "how", "where", "when", "why", "which", "who",
-            "i need", "i want", "can you", "open", "search", "play",
-            "hello", "goodbye", "thanks", "help", "alarm", "timer",
-            "email", "calendar", "reproduce",
+            "what",
+            "how",
+            "where",
+            "when",
+            "why",
+            "which",
+            "who",
+            "i need",
+            "i want",
+            "can you",
+            "open",
+            "search",
+            "play",
+            "hello",
+            "goodbye",
+            "thanks",
+            "help",
+            "alarm",
+            "timer",
+            "email",
+            "calendar",
+            "reproduce",
         )
         es_score = sum(1 for m in es_markers if m in text_lower)
         en_score = sum(1 for m in en_markers if m in text_lower)
@@ -106,7 +147,7 @@ class SpeechRecognizer:
             return True
         audio = np.frombuffer(data, dtype=np.int16).astype(np.float32)
         reduced = nr.reduce_noise(y=audio, sr=self.sample_rate, prop_decrease=PROP_DECREASE)
-        energy = np.sqrt(np.mean(reduced ** 2))
+        energy = np.sqrt(np.mean(reduced**2))
         return energy > ENERGY_THRESHOLD
 
     def listen_once(self) -> str:

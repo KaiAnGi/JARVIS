@@ -1,8 +1,9 @@
 """System tray icon for Jarvis."""
 
 import os
-from PIL import Image
+
 import pystray
+from PIL import Image
 from pystray import MenuItem
 
 ICON_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "jarvis.ico")
@@ -28,10 +29,7 @@ class JarvisTray:
         self._listening = False
 
     def _build_menu(self):
-        return pystray.Menu(
-            MenuItem("Open J.A.R.V.I.S.", self._on_show, default=True),
-            MenuItem("Quit", self._on_quit)
-        )
+        return pystray.Menu(MenuItem("Open J.A.R.V.I.S.", self._on_show, default=True), MenuItem("Quit", self._on_quit))
 
     def _on_show(self, icon, item):
         self.on_show()
@@ -42,12 +40,7 @@ class JarvisTray:
 
     def start(self):
         icon_img = create_icon(listening=False)
-        self._icon = pystray.Icon(
-            "jarvis",
-            icon_img,
-            "J.A.R.V.I.S.",
-            self._build_menu()
-        )
+        self._icon = pystray.Icon("jarvis", icon_img, "J.A.R.V.I.S.", self._build_menu())
         self._icon.run()
 
     def update_listening(self, state: bool):

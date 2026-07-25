@@ -18,7 +18,7 @@ class TestHandle:
         set_lang("en")
         plugin.handle("help", "", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     def test_help_category_found_es(self, bus):

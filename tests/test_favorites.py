@@ -1,7 +1,5 @@
 """Tests for core/favorites.py"""
 
-import json
-
 
 class TestFavorites:
     def test_add_and_get_app(self, tmp_favorites):
@@ -58,6 +56,7 @@ class TestFavorites:
 
     def test_empty_favorites(self, tmp_path, monkeypatch):
         import core.favorites as fav
+
         fav_path = tmp_path / "fresh_favorites.json"
         monkeypatch.setattr(fav, "FAVORITES_PATH", fav_path)
         assert fav.get_apps() == {}

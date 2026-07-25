@@ -487,6 +487,7 @@ python app.py
 def init(bus):
     pass
 
+
 def handle(action: str, text: str, bus):
     bus.emit("speak", "Response here")
 ```

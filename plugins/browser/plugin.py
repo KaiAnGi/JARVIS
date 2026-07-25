@@ -70,8 +70,9 @@ def handle(action: str, text: str, bus):
             bus.emit("speak", resp("what_youtube"))
 
     elif action == "youtube_play":
-        query = extract_after_keyword(text, ("play on youtube", "play", "youtube",
-                                       "reproduce en youtube", "reproducir en youtube"))
+        query = extract_after_keyword(
+            text, ("play on youtube", "play", "youtube", "reproduce en youtube", "reproducir en youtube")
+        )
         if query:
             _do_youtube_search(query, bus)
         else:
@@ -105,6 +106,7 @@ def _do_youtube_search(query: str, bus):
 def _open_first_video(query: str):
     try:
         import urllib.request
+
         url = f"https://www.youtube.com/results?search_query={quote_plus(query)}"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         html = urllib.request.urlopen(req, timeout=5).read().decode("utf-8", errors="ignore")
@@ -120,6 +122,7 @@ def _open_first_video(query: str):
 def _is_valid_url(url: str) -> bool:
     """Basic URL validation — checks scheme and that there's a domain with TLD."""
     from urllib.parse import urlparse
+
     try:
         parsed = urlparse(url)
         if parsed.scheme not in ("http", "https"):
