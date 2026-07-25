@@ -11,6 +11,7 @@ from googleapiclient.discovery import build
 
 from core.credentials_manager import get_credentials
 from core.language import resp
+from core.text_utils import extract_after_keyword
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
@@ -20,6 +21,7 @@ SCOPES = [
 
 _service = None
 _scheduled_emails = []
+_pending_confirm = None
 
 
 def _get_service():
@@ -49,6 +51,24 @@ def handle(action: str, text: str, bus):
 
 
 def _handle(action: str, text: str, bus):
+    global _pending_confirm
+
+    if _pending_confirm is not None:
+        answer = text.lower().strip()
+        if answer in ("sí", "si", "yes", "confirmo", "confirm", "ok", "dale", "claro", "afirmativo"):
+            pending = _pending_confirm
+            _pending_confirm = None
+            if pending["type"] == "delete":
+                _execute_delete(pending["service"], pending["msg_id"], pending["subject"], bus)
+            elif pending["type"] == "send":
+                _execute_send(pending["service"], pending["to"], pending["subject"], pending["body"], bus)
+        else:
+            pending = _pending_confirm
+            _pending_confirm = None
+            cancel_key = "email_delete_cancelled" if pending["type"] == "delete" else "email_send_cancelled"
+            bus.emit("speak", resp(cancel_key))
+        return
+
     service = _get_service()
     if service is None:
         bus.emit("speak", resp("gmail_auth"))
@@ -107,12 +127,9 @@ def _handle(action: str, text: str, bus):
 
 def _delete_email(service, text: str, bus):
     """Delete the most recent email or one matching a query."""
+    global _pending_confirm
     text_lower = text.lower()
-    query = None
-    for prefix in ("delete email", "borra correo", "eliminar correo", "delete mail"):
-        if prefix in text_lower:
-            query = text_lower.split(prefix, 1)[1].strip()
-            break
+    query = extract_after_keyword(text_lower, ("delete email", "borra correo", "eliminar correo", "delete mail"))
 
     if query:
         results = service.users().messages().list(
@@ -129,7 +146,6 @@ def _delete_email(service, text: str, bus):
         return
 
     msg_id = messages[0]["id"]
-    service.users().messages().delete(userId="me", id=msg_id).execute()
 
     m = service.users().messages().get(
         userId="me", id=msg_id, format="metadata",
@@ -140,16 +156,24 @@ def _delete_email(service, text: str, bus):
         if h["name"] == "Subject":
             subject = h["value"]
             break
+
+    _pending_confirm = {"type": "delete", "service": service, "msg_id": msg_id, "subject": subject}
+    bus.emit("speak", resp("email_delete_confirm", subject=subject))
+
+
+def _execute_delete(service, msg_id: str, subject: str, bus):
+    service.users().messages().delete(userId="me", id=msg_id).execute()
     bus.emit("speak", resp("email_deleted", subject=subject))
 
 
 def _send_email_interactive(service, text: str, bus):
     """Send an email. Parses recipient, subject, and body from voice text."""
+    global _pending_confirm
     text_lower = text.lower()
 
-    to = _extract_field(text_lower, ("to ", "para ", "destinatario "))
-    subject = _extract_field(text_lower, ("subject ", "asunto "))
-    body = _extract_field(text_lower, ("body ", "mensaje ", "contenido "))
+    to = extract_after_keyword(text_lower, ("to ", "para ", "destinatario "))
+    subject = extract_after_keyword(text_lower, ("subject ", "asunto "))
+    body = extract_after_keyword(text_lower, ("body ", "mensaje ", "contenido "))
 
     if not to:
         bus.emit("speak", resp("email_who"))
@@ -160,11 +184,11 @@ def _send_email_interactive(service, text: str, bus):
     if not body:
         body = "(Enviado por voz via J.A.R.V.I.S.)"
 
-    _do_send(service, to, subject, body, bus)
+    _pending_confirm = {"type": "send", "service": service, "to": to, "subject": subject, "body": body}
+    bus.emit("speak", resp("email_send_confirm", to=to, subject=subject))
 
 
-def _do_send(service, to: str, subject: str, body: str, bus, speak_msg=None):
-    """Actually send an email via Gmail API."""
+def _execute_send(service, to: str, subject: str, body: str, bus):
     message = MIMEMultipart()
     message["to"] = to
     message["subject"] = subject
@@ -175,19 +199,19 @@ def _do_send(service, to: str, subject: str, body: str, bus, speak_msg=None):
         userId="me", body={"raw": raw}
     ).execute()
 
-    bus.emit("speak", speak_msg or resp("email_sent", to=to))
+    bus.emit("speak", resp("email_sent", to=to))
 
 
 def _schedule_email(service, text: str, bus):
     """Schedule an email to be sent later."""
     text_lower = text.lower()
 
-    to = _extract_field(text_lower, ("to ", "para ", "destinatario "))
-    subject = _extract_field(text_lower, ("subject ", "asunto "))
-    body = _extract_field(text_lower, ("body ", "mensaje ", "contenido "))
-    time_str = _extract_field(text_lower, ("at ", "a las ", "para las "))
+    to = extract_after_keyword(text_lower, ("to ", "para ", "destinatario "))
+    subject = extract_after_keyword(text_lower, ("subject ", "asunto "))
+    body = extract_after_keyword(text_lower, ("body ", "mensaje ", "contenido "))
+    time_str = extract_after_keyword(text_lower, ("at ", "a las ", "para las "))
     if not time_str:
-        time_str = _extract_field(text_lower, ("schedule ", "programa "))
+        time_str = extract_after_keyword(text_lower, ("schedule ", "programa "))
 
     if not to:
         bus.emit("speak", resp("email_who"))
@@ -215,23 +239,21 @@ def _schedule_email(service, text: str, bus):
 
     def _send_later():
         time.sleep(delay)
-        _do_send(service, to, subject, body, bus,
-                 speak_msg=resp("email_scheduled_sent", to=to, time=send_time.strftime("%H:%M")))
+        message = MIMEMultipart()
+        message["to"] = to
+        message["subject"] = subject
+        message.attach(MIMEText(body, "plain"))
+        raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
+        service.users().messages().send(
+            userId="me", body={"raw": raw}
+        ).execute()
+        bus.emit("speak", resp("email_scheduled_sent", to=to, time=send_time.strftime("%H:%M")))
 
     threading.Thread(target=_send_later, daemon=True).start()
     _scheduled_emails.append({"to": to, "subject": subject, "time": send_time})
 
     bus.emit("speak", resp("email_scheduled", to=to, time=send_time.strftime("%H:%M")))
 
-
-def _extract_field(text: str, prefixes: tuple) -> str:
-    """Extract a field value after one of the given prefixes."""
-    for prefix in sorted(prefixes, key=len, reverse=True):
-        if prefix in text:
-            value = text.split(prefix, 1)[1].strip()
-            if value:
-                return value
-    return ""
 
 
 def _parse_time(time_str: str):

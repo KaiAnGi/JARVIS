@@ -4,6 +4,7 @@ import json
 import os
 import urllib.request
 from core.language import resp
+from core.text_utils import extract_after_keyword
 
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 
@@ -19,14 +20,14 @@ def handle(action: str, text: str, bus):
         return
 
     if action == "discord_send":
-        message = _extract_message(text, ("send to discord", "discord", "enviar a discord", "notificar"))
+        message = extract_after_keyword(text, ("send to discord", "discord", "enviar a discord", "notificar"))
         if message:
             _send_webhook(message, bus)
         else:
             bus.emit("speak", resp("discord_send_what"))
 
     elif action == "discord_notify":
-        message = _extract_message(text, ("notify discord", "notifica", "avisa a discord"))
+        message = extract_after_keyword(text, ("notify discord", "notifica", "avisa a discord"))
         if message:
             _send_webhook(f"**Notificación:** {message}", bus)
         else:
@@ -49,14 +50,3 @@ def _send_webhook(message: str, bus):
     except Exception as e:
         print(f"[DISCORD_NOTIFY] Error: {e}")
         bus.emit("speak", resp("discord_error"))
-
-
-def _extract_message(text: str, keywords: tuple) -> str:
-    lower = text.lower()
-    for kw in keywords:
-        idx = lower.find(kw)
-        if idx != -1:
-            after = text[idx + len(kw):].strip()
-            if after:
-                return after
-    return ""

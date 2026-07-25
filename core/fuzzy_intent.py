@@ -5,6 +5,7 @@ Set JARVIS_OLLAMA_MODEL env var to use a different model (default: qwen3:8b).
 """
 
 import json
+import time
 
 from core.ollama_client import chat, is_available, MODEL
 from core.language import get_lang
@@ -17,7 +18,7 @@ _RECHECK_INTERVAL = 60.0
 def is_ollama_ready() -> bool:
     """Check if Ollama is available, rechecking periodically."""
     global _available, _last_check
-    now = __import__("time").time()
+    now = time.time()
     if _available is None or now - _last_check > _RECHECK_INTERVAL:
         _available = is_available()
         _last_check = now

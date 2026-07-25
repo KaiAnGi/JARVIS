@@ -3,7 +3,8 @@
 import json
 import urllib.request
 from urllib.parse import quote_plus
-from core.language import resp
+from core.language import resp, get_lang
+from core.text_utils import extract_after_keyword
 
 GEO_URL = "https://geocoding-api.open-meteo.com/v1/search"
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
@@ -15,13 +16,13 @@ def init(bus):
 
 def handle(action: str, text: str, bus):
     if action == "get_weather":
-        city = _extract_city(text, ("weather", "clima", "tiempo", "temperatura", "how's the weather", "qué tiempo hace"))
+        city = extract_after_keyword(text, ("weather", "clima", "tiempo", "temperatura", "how's the weather", "qué tiempo hace"))
         if not city:
             city = "Madrid"
         _fetch_weather(city, bus)
 
     elif action == "get_weather_city":
-        city = _extract_city(text, ("weather in", "clima en", "tiempo en", "temperatura en"))
+        city = extract_after_keyword(text, ("weather in", "clima en", "tiempo en", "temperatura en"))
         if city:
             _fetch_weather(city, bus)
         else:
@@ -70,7 +71,7 @@ def _fetch_weather(city: str, bus):
 
 
 def _weather_code_to_text(code: int) -> str:
-    mapping = {
+    mapping_es = {
         0: "despejado", 1: "mayormente despejado", 2: "parcialmente nublado", 3: "nublado",
         45: "niebla", 48: "niebla con escarcha",
         51: "llovizna ligera", 53: "llovizna", 55: "llovizna intensa",
@@ -79,15 +80,14 @@ def _weather_code_to_text(code: int) -> str:
         80: "chubascos ligeros", 81: "chubascos", 82: "chubascos intensos",
         95: "tormenta", 96: "tormenta con granizo", 99: "tormenta fuerte con granizo",
     }
-    return mapping.get(code, f"código {code}")
-
-
-def _extract_city(text: str, keywords: tuple) -> str:
-    lower = text.lower()
-    for kw in keywords:
-        idx = lower.find(kw)
-        if idx != -1:
-            after = text[idx + len(kw):].strip()
-            if after:
-                return after.strip("?.,!")
-    return ""
+    mapping_en = {
+        0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast",
+        45: "fog", 48: "rime fog",
+        51: "light drizzle", 53: "drizzle", 55: "heavy drizzle",
+        61: "light rain", 63: "rain", 65: "heavy rain",
+        71: "light snow", 73: "snow", 75: "heavy snow",
+        80: "light showers", 81: "showers", 82: "heavy showers",
+        95: "thunderstorm", 96: "thunderstorm with hail", 99: "severe thunderstorm with hail",
+    }
+    mapping = mapping_es if get_lang() == "es" else mapping_en
+    return mapping.get(code, f"code {code}")
