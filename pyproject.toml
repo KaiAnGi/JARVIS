@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "J.A.R.V.I.S. — Just A Rather Very Intelligent System"
 requires-python = ">=3.11"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 
 dependencies = [
     "python-dotenv>=1.0",
@@ -143,3 +143,7 @@ exclude_lines = [
 show_missing = true
 skip_covered = true
 fail_under = 0
+
+[tool.setuptools.packages.find]
+include = ["core*", "plugins*"]
+exclude = ["tests*", "gui*", "data*", "assets*", "config*", "models*"]
