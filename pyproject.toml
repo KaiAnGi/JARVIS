@@ -6,6 +6,48 @@ requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
 
+dependencies = [
+    "python-dotenv>=1.0",
+    "numpy>=1.24",
+    "noisereduce>=3.0",
+]
+
+[project.optional-dependencies]
+audio = [
+    "vosk==0.3.45",
+    "pyaudio==0.2.14",
+    "openwakeword==0.6.0",
+]
+gui = [
+    "PyQt6==6.11.0",
+    "pystray==0.19.5",
+    "Pillow==12.3.0",
+]
+win = [
+    "pywin32==312",
+    "pygetwindow==0.0.9",
+    "pyautogui==0.9.54",
+]
+plugins = [
+    "gitpython==3.1.53",
+    "google-api-python-client==2.198.0",
+    "google-auth-httplib2==0.4.0",
+    "google-auth-oauthlib==1.4.0",
+    "pyperclip==1.11.0",
+]
+all = [
+    "jarvis-voice-assistant[audio,gui,win,plugins]",
+]
+test = [
+    "jarvis-voice-assistant[plugins]",
+    "pytest>=7.0",
+    "pytest-cov>=5.0",
+    "pytest-mock>=3.0",
+    "ruff>=0.1",
+    "mypy>=1.0",
+    "pre-commit>=3.0",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
