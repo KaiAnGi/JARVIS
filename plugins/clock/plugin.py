@@ -216,7 +216,8 @@ def _stop_stopwatch(bus):
             bus.emit("speak", resp("stopwatch_not_running"))
             return
 
-        _stopwatch_elapsed = datetime.now() - _stopwatch_start
+        if _stopwatch_start is not None:
+            _stopwatch_elapsed = datetime.now() - _stopwatch_start
         _stopwatch_running = False
     bus.emit("speak", resp("stopwatch_stopped", time=_format_duration(_stopwatch_elapsed)))
 
@@ -237,7 +238,7 @@ def _read_stopwatch(bus):
         start = _stopwatch_start
         elapsed = _stopwatch_elapsed
 
-    if running:
+    if running and start is not None:
         current = datetime.now() - start
         bus.emit("speak", resp("stopwatch_elapsed", time=_format_duration(current)))
     elif elapsed > timedelta(0):

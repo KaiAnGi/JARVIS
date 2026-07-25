@@ -78,7 +78,7 @@ def handle(action: str, text: str, bus):
     elif action == "git_log":
         logs = list(repo.iter_commits(max_count=5))
         if logs:
-            lines = [f"{c.hexsha[:7]} {c.summary}" for c in logs]
+            lines = [f"{c.hexsha[:7]} {c.summary!s}" for c in logs]
             bus.emit("speak", resp("git_log_result", count=len(logs), log="; ".join(lines)))
         else:
             bus.emit("speak", resp("git_no_commits"))
