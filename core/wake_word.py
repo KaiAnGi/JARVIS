@@ -62,7 +62,7 @@ class WakeWordDetector:
             self._pa.terminate()
 
     def check(self) -> str | None:
-        if not self._stream:
+        if not self._stream or self.model is None:
             return None
         data = self._stream.read(1280, exception_on_overflow=False)
         audio = np.frombuffer(data, dtype=np.int16)
