@@ -131,5 +131,5 @@ class TestHandle:
         set_lang("es")
         plugin.handle("calculate", "calculate 5 divided by 0", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"

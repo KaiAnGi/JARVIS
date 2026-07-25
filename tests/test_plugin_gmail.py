@@ -1,7 +1,7 @@
 """Tests for plugins/gmail/plugin.py"""
 
-from unittest.mock import patch, MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock, patch
 
 from core.language import set_lang
 from plugins.gmail import plugin
@@ -53,9 +53,7 @@ class TestConfirmationFlow:
     def test_delete_asks_confirmation(self, mock_get_service, bus):
         set_lang("es")
         mock_service = MagicMock()
-        mock_service.users().messages().list().execute.return_value = {
-            "messages": [{"id": "msg1"}]
-        }
+        mock_service.users().messages().list().execute.return_value = {"messages": [{"id": "msg1"}]}
         mock_service.users().messages().get().execute.return_value = {
             "payload": {"headers": [{"name": "Subject", "value": "Test Subject"}]}
         }
@@ -70,9 +68,7 @@ class TestConfirmationFlow:
     def test_delete_confirm_yes(self, mock_get_service, bus):
         set_lang("es")
         mock_service = MagicMock()
-        mock_service.users().messages().list().execute.return_value = {
-            "messages": [{"id": "msg1"}]
-        }
+        mock_service.users().messages().list().execute.return_value = {"messages": [{"id": "msg1"}]}
         mock_service.users().messages().get().execute.return_value = {
             "payload": {"headers": [{"name": "Subject", "value": "Test"}]}
         }
@@ -87,9 +83,7 @@ class TestConfirmationFlow:
     def test_delete_confirm_no(self, mock_get_service, bus):
         set_lang("es")
         mock_service = MagicMock()
-        mock_service.users().messages().list().execute.return_value = {
-            "messages": [{"id": "msg1"}]
-        }
+        mock_service.users().messages().list().execute.return_value = {"messages": [{"id": "msg1"}]}
         mock_service.users().messages().get().execute.return_value = {
             "payload": {"headers": [{"name": "Subject", "value": "Test"}]}
         }
@@ -152,9 +146,7 @@ class TestConfirmationFlow:
     def test_count_email(self, mock_get_service, bus):
         set_lang("es")
         mock_service = MagicMock()
-        mock_service.users().messages().list().execute.return_value = {
-            "messages": [{"id": "1"}, {"id": "2"}]
-        }
+        mock_service.users().messages().list().execute.return_value = {"messages": [{"id": "1"}, {"id": "2"}]}
         mock_get_service.return_value = mock_service
 
         plugin.handle("count_email", "how many emails", bus)
@@ -196,5 +188,5 @@ class TestConfirmationFlow:
 
         plugin.handle("send_email", "send email to test@example.com", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"

@@ -3,7 +3,7 @@
 import random
 from datetime import datetime
 
-from core.language import resp, get_lang
+from core.language import get_lang
 
 
 def init(bus):

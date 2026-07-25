@@ -1,7 +1,6 @@
 """Tests for plugins/clock/plugin.py"""
 
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
 from plugins.clock import plugin
 

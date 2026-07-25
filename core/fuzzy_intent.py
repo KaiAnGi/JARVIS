@@ -7,8 +7,8 @@ Set JARVIS_OLLAMA_MODEL env var to use a different model (default: qwen3:8b).
 import json
 import time
 
-from core.ollama_client import chat, is_available, MODEL
 from core.language import get_lang
+from core.ollama_client import chat, is_available
 
 _available = None
 _last_check = 0.0
@@ -110,7 +110,7 @@ def match_fuzzy(text: str) -> dict | None:
 
     lang = get_lang()
     hint = LANG_HINTS.get(lang, "")
-    prompt = f"{hint}\n\nUser said: \"{text}\""
+    prompt = f'{hint}\n\nUser said: "{text}"'
 
     response = chat(prompt, system=SYSTEM_PROMPT)
     if not response:

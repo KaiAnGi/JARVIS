@@ -1,9 +1,5 @@
 """Tests for plugins/chitchat/plugin.py"""
 
-from unittest.mock import patch
-from datetime import datetime
-
-from core.language import set_lang
 from plugins.chitchat import plugin
 
 
@@ -141,13 +137,13 @@ class TestHandle:
     def test_compliment(self, bus):
         plugin.handle("compliment", "", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     def test_insult(self, bus):
         plugin.handle("insult", "", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     def test_status(self, bus):

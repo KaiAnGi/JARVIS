@@ -1,7 +1,5 @@
 """Tests for core/database.py"""
 
-import time
-
 
 class TestDatabase:
     def test_init_creates_tables(self, tmp_db):

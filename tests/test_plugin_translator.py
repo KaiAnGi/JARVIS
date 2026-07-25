@@ -1,7 +1,7 @@
 """Tests for plugins/translator/plugin.py"""
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from core.language import set_lang
 from plugins.translator import plugin
@@ -87,9 +87,7 @@ class TestHandle:
     def test_translate_success(self, mock_urlopen, bus):
         set_lang("es")
         mock_resp = MagicMock()
-        mock_resp.read.return_value = json.dumps([
-            [["hola", None], [None, "en"]]
-        ]).encode()
+        mock_resp.read.return_value = json.dumps([[["hola", None], [None, "en"]]]).encode()
         mock_resp.__enter__ = lambda s: s
         mock_resp.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_resp
@@ -107,7 +105,7 @@ class TestHandle:
 
         plugin.handle("translate", "translate hello to spanish", bus)
         bus.emit.assert_called_once()
-        event, msg = bus.emit.call_args[0]
+        event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
     def test_translate_to_english_no_match(self, bus):

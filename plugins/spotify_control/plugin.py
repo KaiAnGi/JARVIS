@@ -1,10 +1,11 @@
 """Spotify control plugin — play, pause, next, previous, volume."""
 
+import base64
 import json
 import os
 import threading
 import urllib.request
-import base64
+
 from core.language import resp
 from core.text_utils import extract_after_keyword
 
@@ -36,12 +37,12 @@ def handle(action: str, text: str, bus):
         return
 
     endpoints = {
-        "spotify_pause":    ("PUT",  "https://api.spotify.com/v1/player/pause"),
-        "spotify_resume":   ("PUT",  "https://api.spotify.com/v1/player/play"),
-        "spotify_next":     ("POST", "https://api.spotify.com/v1/player/next"),
+        "spotify_pause": ("PUT", "https://api.spotify.com/v1/player/pause"),
+        "spotify_resume": ("PUT", "https://api.spotify.com/v1/player/play"),
+        "spotify_next": ("POST", "https://api.spotify.com/v1/player/next"),
         "spotify_previous": ("POST", "https://api.spotify.com/v1/player/previous"),
-        "spotify_mute":     ("PUT",  "https://api.spotify.com/v1/player/volume?volume_percent=0"),
-        "spotify_unmute":   ("PUT",  "https://api.spotify.com/v1/player/volume?volume_percent=50"),
+        "spotify_mute": ("PUT", "https://api.spotify.com/v1/player/volume?volume_percent=0"),
+        "spotify_unmute": ("PUT", "https://api.spotify.com/v1/player/volume?volume_percent=50"),
     }
 
     if action in endpoints:
@@ -124,6 +125,7 @@ def _get_current_track(token: str, bus):
 def _search_and_play(query: str, token: str, bus):
     try:
         from urllib.parse import quote_plus
+
         url = f"https://api.spotify.com/v1/search?q={quote_plus(query)}&type=track&limit=1"
         req = urllib.request.Request(url)
         req.add_header("Authorization", f"Bearer {token}")
@@ -151,7 +153,8 @@ def _search_and_play(query: str, token: str, bus):
 
 def _extract_volume(text: str) -> int | None:
     import re
-    match = re.search(r'(\d+)', text)
+
+    match = re.search(r"(\d+)", text)
     if match:
         vol = int(match.group(1))
         return max(0, min(100, vol))

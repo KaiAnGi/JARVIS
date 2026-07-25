@@ -28,13 +28,13 @@ def _find_code_exe():
 
 def _run_code(*args, bus, msg_key="vscode_opened", **msg_kwargs):
     try:
-        subprocess.Popen(["code"] + list(args))
+        subprocess.Popen(["code", *list(args)])
         bus.emit("speak", resp(msg_key, **msg_kwargs) if msg_kwargs else resp(msg_key))
     except FileNotFoundError:
         exe = _find_code_exe()
         if exe:
             try:
-                subprocess.Popen([exe] + list(args))
+                subprocess.Popen([exe, *list(args)])
                 bus.emit("speak", resp(msg_key, **msg_kwargs) if msg_kwargs else resp(msg_key))
             except Exception:
                 bus.emit("speak", resp("vscode_not_found"))

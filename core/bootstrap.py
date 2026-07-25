@@ -1,8 +1,8 @@
 """Shared application bootstrap — creates the core objects used by both CLI and GUI."""
 
-from core.event_bus import EventBus
 from core.audio_input import SpeechRecognizer
 from core.audio_output import Speaker
+from core.event_bus import EventBus
 from core.intent_router import IntentRouter
 from core.plugin_loader import load_plugins
 from core.wake_word import WakeWordDetector

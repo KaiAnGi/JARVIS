@@ -1,7 +1,6 @@
 """Persistent text logging to daily log files using stdlib logging."""
 
 import logging
-import time
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
@@ -30,10 +29,12 @@ def _get_logger() -> logging.Logger:
             backupCount=30,
             encoding="utf-8",
         )
-        handler.setFormatter(logging.Formatter(
-            "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",
-            datefmt="%H:%M:%S",
-        ))
+        handler.setFormatter(
+            logging.Formatter(
+                "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",
+                datefmt="%H:%M:%S",
+            )
+        )
         _logger.addHandler(handler)
 
     return _logger
@@ -78,8 +79,7 @@ def log_session_end():
 
 def get_today_logs() -> str:
     """Read today's log file."""
-    today = datetime.now().strftime("%Y-%m-%d")
-    path = LOG_DIR / f"jarvis.log"
+    path = LOG_DIR / "jarvis.log"
     if path.exists():
         return path.read_text(encoding="utf-8")
     return ""

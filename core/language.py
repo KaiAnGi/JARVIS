@@ -1,8 +1,5 @@
 """Language manager — single source of truth for locale, patterns, and UI strings."""
 
-from pathlib import Path
-import json
-
 _current = "es"
 
 MODELS = {
@@ -349,176 +346,264 @@ RESPONSES = {
 # key = action, value = list of patterns
 INTENT_PATTERNS = {
     "datetime_calc": {
-        "get_time":    {"en": ["what time"],              "es": ["qué hora", "que hora"]},
-        "get_date":    {"en": ["what date", "what day"],   "es": ["qué fecha", "qué día", "que fecha", "que día"]},
-        "calculate":   {"en": ["calculate", "what is", "what's"],
-                        "es": ["calcular", "cuánto es", "cuanto es"]},
+        "get_time": {"en": ["what time"], "es": ["qué hora", "que hora"]},
+        "get_date": {"en": ["what date", "what day"], "es": ["qué fecha", "qué día", "que fecha", "que día"]},
+        "calculate": {"en": ["calculate", "what is", "what's"], "es": ["calcular", "cuánto es", "cuanto es"]},
     },
     "system_control": {
-        "open_app":       {"en": ["open", "launch"],       "es": ["abre", "iniciar"]},
-        "minimize_window":{"en": ["minimize"],              "es": ["minimizar"]},
-        "maximize_window":{"en": ["maximize"],              "es": ["maximizar"]},
-        "close_window":   {"en": ["close window"],          "es": ["cierra ventana"]},
-        "open_explorer":  {"en": ["open explorer"],         "es": ["abre explorador"]},
+        "open_app": {"en": ["open", "launch"], "es": ["abre", "iniciar"]},
+        "minimize_window": {"en": ["minimize"], "es": ["minimizar"]},
+        "maximize_window": {"en": ["maximize"], "es": ["maximizar"]},
+        "close_window": {"en": ["close window"], "es": ["cierra ventana"]},
+        "open_explorer": {"en": ["open explorer"], "es": ["abre explorador"]},
     },
     "browser": {
-        "web_search":    {"en": ["search", "google"],       "es": ["buscar", "busca"]},
-        "youtube_search":{"en": ["youtube", "you tube"],     "es": ["youtube", "you tube"]},
-        "youtube_play":  {"en": ["play on youtube", "play"], "es": ["reproduce en youtube", "reproducir en youtube"]},
-        "open_url":      {"en": ["open website"],            "es": ["abre sitio web", "abre página"]},
+        "web_search": {"en": ["search", "google"], "es": ["buscar", "busca"]},
+        "youtube_search": {"en": ["youtube", "you tube"], "es": ["youtube", "you tube"]},
+        "youtube_play": {"en": ["play on youtube", "play"], "es": ["reproduce en youtube", "reproducir en youtube"]},
+        "open_url": {"en": ["open website"], "es": ["abre sitio web", "abre página"]},
     },
     "git_control": {
         "git_status": {"en": ["git status", "get status"], "es": ["git status", "get status"]},
         "git_commit": {"en": ["git commit", "get commit"], "es": ["git commit", "get commit"]},
-        "git_push":   {"en": ["git push", "get push"],     "es": ["git push", "get push"]},
-        "git_pull":   {"en": ["git pull", "get pull"],     "es": ["git pull", "get pull"]},
-        "git_log":    {"en": ["git log", "get log"],       "es": ["git log", "get log"]},
+        "git_push": {"en": ["git push", "get push"], "es": ["git push", "get push"]},
+        "git_pull": {"en": ["git pull", "get pull"], "es": ["git pull", "get pull"]},
+        "git_log": {"en": ["git log", "get log"], "es": ["git log", "get log"]},
     },
     "vscode_control": {
         "open_project": {"en": ["open project"], "es": ["abre proyecto"]},
-        "open_vscode":  {"en": ["open vscode"],  "es": ["abre vscode"]},
-        "open_file":    {"en": ["open file"],     "es": ["abre archivo"]},
-        "run_task":     {"en": ["run task"],      "es": ["ejecuta tarea"]},
+        "open_vscode": {"en": ["open vscode"], "es": ["abre vscode"]},
+        "open_file": {"en": ["open file"], "es": ["abre archivo"]},
+        "run_task": {"en": ["run task"], "es": ["ejecuta tarea"]},
     },
     "gmail": {
-        "check_email": {"en": ["check email"],           "es": ["revisa correo", "revisar correo"]},
-        "read_email":  {"en": ["read email"],            "es": ["lee correo", "leer correo"]},
-        "send_email":  {"en": ["send email", "send mail", "write email", "compose email"],
-                       "es": ["envía correo", "enviar correo", "escribe correo", "redactar correo"]},
-        "count_email": {"en": ["how many emails"],       "es": ["cuántos correos", "cuantos correos"]},
-        "delete_email":{"en": ["delete email", "remove email", "delete mail"],
-                       "es": ["borra correo", "eliminar correo", "borrar correo", "elimina correo"]},
-        "schedule_email":{"en": ["schedule email", "send later", "program email"],
-                         "es": ["programa correo", "programar correo", "enviar después", "envía después"]},
+        "check_email": {"en": ["check email"], "es": ["revisa correo", "revisar correo"]},
+        "read_email": {"en": ["read email"], "es": ["lee correo", "leer correo"]},
+        "send_email": {
+            "en": ["send email", "send mail", "write email", "compose email"],
+            "es": ["envía correo", "enviar correo", "escribe correo", "redactar correo"],
+        },
+        "count_email": {"en": ["how many emails"], "es": ["cuántos correos", "cuantos correos"]},
+        "delete_email": {
+            "en": ["delete email", "remove email", "delete mail"],
+            "es": ["borra correo", "eliminar correo", "borrar correo", "elimina correo"],
+        },
+        "schedule_email": {
+            "en": ["schedule email", "send later", "program email"],
+            "es": ["programa correo", "programar correo", "enviar después", "envía después"],
+        },
     },
     "calendar": {
-        "list_events": {"en": ["what's on my calendar", "my schedule"],
-                        "es": ["qué hay en mi calendario", "mi agenda"]},
-        "next_event":  {"en": ["what's next"],            "es": ["qué sigue", "que sigue", "próximo evento"]},
-        "create_event":{"en": ["create event", "add to calendar"],
-                        "es": ["crear evento", "agregar al calendario"]},
+        "list_events": {
+            "en": ["what's on my calendar", "my schedule"],
+            "es": ["qué hay en mi calendario", "mi agenda"],
+        },
+        "next_event": {"en": ["what's next"], "es": ["qué sigue", "que sigue", "próximo evento"]},
+        "create_event": {"en": ["create event", "add to calendar"], "es": ["crear evento", "agregar al calendario"]},
     },
     "tab_control": {
-        "close_tab":     {"en": ["close tab"],                    "es": ["cerrar pestaña", "cierra pestaña", "cierra la pestaña"]},
-        "new_tab":       {"en": ["new tab", "open tab"],          "es": ["nueva pestaña", "abre pestaña", "abrir pestaña", "abre una pestaña"]},
-        "duplicate_tab": {"en": ["duplicate tab"],                 "es": ["duplicar pestaña", "duplica pestaña", "duplica la pestaña"]},
-        "switch_tab":    {"en": ["switch tab", "tab picker"],     "es": ["cambiar pestaña", "cambia pestaña", "cambia la pestaña", "selector de pestañas", "cambiar de pestaña"]},
-        "reopen_tab":    {"en": ["reopen tab", "restore tab"],    "es": ["reabrir pestaña", "reabre pestaña", "restaurar pestaña", "restaura pestaña"]},
-        "focus_address": {"en": ["address bar", "go to address"], "es": ["barra de direcciones", "ir a dirección", "ve a la barra de direcciones", "seleccionar barra de direcciones"]},
+        "close_tab": {"en": ["close tab"], "es": ["cerrar pestaña", "cierra pestaña", "cierra la pestaña"]},
+        "new_tab": {
+            "en": ["new tab", "open tab"],
+            "es": ["nueva pestaña", "abre pestaña", "abrir pestaña", "abre una pestaña"],
+        },
+        "duplicate_tab": {"en": ["duplicate tab"], "es": ["duplicar pestaña", "duplica pestaña", "duplica la pestaña"]},
+        "switch_tab": {
+            "en": ["switch tab", "tab picker"],
+            "es": [
+                "cambiar pestaña",
+                "cambia pestaña",
+                "cambia la pestaña",
+                "selector de pestañas",
+                "cambiar de pestaña",
+            ],
+        },
+        "reopen_tab": {
+            "en": ["reopen tab", "restore tab"],
+            "es": ["reabrir pestaña", "reabre pestaña", "restaurar pestaña", "restaura pestaña"],
+        },
+        "focus_address": {
+            "en": ["address bar", "go to address"],
+            "es": [
+                "barra de direcciones",
+                "ir a dirección",
+                "ve a la barra de direcciones",
+                "seleccionar barra de direcciones",
+            ],
+        },
     },
     "language_control": {
-        "toggle_language": {"en": ["switch language", "change language", "toggle language"],
-                           "es": ["cambiar idioma", "cambia idioma", "cambiar a español", "cambiar a ingles"]},
-        "set_spanish":    {"en": ["switch to spanish", "speak spanish"],
-                          "es": ["cambiar a español", "habla español", "pon español"]},
-        "set_english":   {"en": ["switch to english", "speak english"],
-                         "es": ["cambiar a ingles", "cambiar a inglés", "habla ingles", "habla inglés", "pon ingles", "pon inglés"]},
+        "toggle_language": {
+            "en": ["switch language", "change language", "toggle language"],
+            "es": ["cambiar idioma", "cambia idioma", "cambiar a español", "cambiar a ingles"],
+        },
+        "set_spanish": {
+            "en": ["switch to spanish", "speak spanish"],
+            "es": ["cambiar a español", "habla español", "pon español"],
+        },
+        "set_english": {
+            "en": ["switch to english", "speak english"],
+            "es": ["cambiar a ingles", "cambiar a inglés", "habla ingles", "habla inglés", "pon ingles", "pon inglés"],
+        },
     },
     "help": {
-        "help": {"en": ["help", "what can you do", "commands"],
-                "es": ["ayuda", "qué puedes hacer", "comandos", "qué sabes hacer"]},
-        "help_category": {"en": ["help with", "tell me about", "info about"],
-                         "es": ["ayuda con", "cuéntame de", "información de", "info de"]},
+        "help": {
+            "en": ["help", "what can you do", "commands"],
+            "es": ["ayuda", "qué puedes hacer", "comandos", "qué sabes hacer"],
+        },
+        "help_category": {
+            "en": ["help with", "tell me about", "info about"],
+            "es": ["ayuda con", "cuéntame de", "información de", "info de"],
+        },
     },
     "chitchat": {
-        "greeting": {"en": ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"],
-                    "es": ["hola", "buenos días", "buenas tardes", "buenas noches", "hey"]},
-        "how_are_you": {"en": ["how are you", "how's it going", "what's up"],
-                       "es": ["cómo estás", "qué tal", "cómo vas", "qué hay"]},
-        "who_are_you": {"en": ["who are you", "what are you", "your name"],
-                       "es": ["quién eres", "qué eres", "cómo te llamas"]},
-        "thanks": {"en": ["thank you", "thanks", "appreciate"],
-                  "es": ["gracias", "muchas gracias", "te agradezco"]},
-        "compliment": {"en": ["good job", "well done", "you're great", "you're the best"],
-                      "es": ["bien hecho", "buen trabajo", "eres genial", "eres el mejor"]},
-        "insult": {"en": ["you're bad", "you're stupid", "you're slow"],
-                  "es": ["eres malo", "eres tonto", "eres lento"]},
-        "status": {"en": ["status", "are you working", "you ok"],
-                  "es": ["estado", "estás funcionando", "estás bien"]},
-        "joke": {"en": ["tell me a joke", "joke", "make me laugh"],
-                "es": ["cuéntame un chiste", "chiste", "hazme reír"]},
+        "greeting": {
+            "en": ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"],
+            "es": ["hola", "buenos días", "buenas tardes", "buenas noches", "hey"],
+        },
+        "how_are_you": {
+            "en": ["how are you", "how's it going", "what's up"],
+            "es": ["cómo estás", "qué tal", "cómo vas", "qué hay"],
+        },
+        "who_are_you": {
+            "en": ["who are you", "what are you", "your name"],
+            "es": ["quién eres", "qué eres", "cómo te llamas"],
+        },
+        "thanks": {"en": ["thank you", "thanks", "appreciate"], "es": ["gracias", "muchas gracias", "te agradezco"]},
+        "compliment": {
+            "en": ["good job", "well done", "you're great", "you're the best"],
+            "es": ["bien hecho", "buen trabajo", "eres genial", "eres el mejor"],
+        },
+        "insult": {
+            "en": ["you're bad", "you're stupid", "you're slow"],
+            "es": ["eres malo", "eres tonto", "eres lento"],
+        },
+        "status": {"en": ["status", "are you working", "you ok"], "es": ["estado", "estás funcionando", "estás bien"]},
+        "joke": {
+            "en": ["tell me a joke", "joke", "make me laugh"],
+            "es": ["cuéntame un chiste", "chiste", "hazme reír"],
+        },
     },
     "clock": {
-        "set_alarm": {"en": ["set alarm", "alarm at", "wake me"],
-                     "es": ["poner alarma", "alarma a las", "despiértame"]},
-        "cancel_alarm": {"en": ["cancel alarm", "stop alarm", "remove alarm"],
-                        "es": ["cancelar alarma", "para alarma", "quitar alarma"]},
-        "list_alarms": {"en": ["list alarms", "what alarms", "show alarms"],
-                       "es": ["lista alarmas", "qué alarmas", "mostrar alarmas"]},
-        "start_timer": {"en": ["timer", "countdown", "set timer"],
-                       "es": ["temporizador", "cuenta regresiva", "poner temporizador"]},
-        "stop_timer": {"en": ["stop timer", "cancel timer", "cancel countdown"],
-                      "es": ["parar temporizador", "cancelar temporizador", "cancelar cuenta"]},
-        "start_stopwatch": {"en": ["start stopwatch", "start chrono", "begin stopwatch"],
-                           "es": ["iniciar cronómetro", "empezar cronómetro", "iniciar cronometro"]},
-        "stop_stopwatch": {"en": ["stop stopwatch", "stop chrono", "pause stopwatch"],
-                          "es": ["parar cronómetro", "parar cronometro", "pausar cronómetro"]},
-        "reset_stopwatch": {"en": ["reset stopwatch", "reset chrono"],
-                           "es": ["reiniciar cronómetro", "reiniciar cronometro"]},
-        "read_stopwatch": {"en": ["read stopwatch", "check stopwatch", "what time stopwatch", "elapsed time"],
-                          "es": ["leer cronómetro", "ver cronómetro", "qué tiempo cronómetro", "tiempo transcurrido"]},
+        "set_alarm": {
+            "en": ["set alarm", "alarm at", "wake me"],
+            "es": ["poner alarma", "alarma a las", "despiértame"],
+        },
+        "cancel_alarm": {
+            "en": ["cancel alarm", "stop alarm", "remove alarm"],
+            "es": ["cancelar alarma", "para alarma", "quitar alarma"],
+        },
+        "list_alarms": {
+            "en": ["list alarms", "what alarms", "show alarms"],
+            "es": ["lista alarmas", "qué alarmas", "mostrar alarmas"],
+        },
+        "start_timer": {
+            "en": ["timer", "countdown", "set timer"],
+            "es": ["temporizador", "cuenta regresiva", "poner temporizador"],
+        },
+        "stop_timer": {
+            "en": ["stop timer", "cancel timer", "cancel countdown"],
+            "es": ["parar temporizador", "cancelar temporizador", "cancelar cuenta"],
+        },
+        "start_stopwatch": {
+            "en": ["start stopwatch", "start chrono", "begin stopwatch"],
+            "es": ["iniciar cronómetro", "empezar cronómetro", "iniciar cronometro"],
+        },
+        "stop_stopwatch": {
+            "en": ["stop stopwatch", "stop chrono", "pause stopwatch"],
+            "es": ["parar cronómetro", "parar cronometro", "pausar cronómetro"],
+        },
+        "reset_stopwatch": {
+            "en": ["reset stopwatch", "reset chrono"],
+            "es": ["reiniciar cronómetro", "reiniciar cronometro"],
+        },
+        "read_stopwatch": {
+            "en": ["read stopwatch", "check stopwatch", "what time stopwatch", "elapsed time"],
+            "es": ["leer cronómetro", "ver cronómetro", "qué tiempo cronómetro", "tiempo transcurrido"],
+        },
     },
     "clipboard": {
-        "clipboard_read":  {"en": ["read clipboard", "what's in clipboard", "clipboard"],
-                           "es": ["lee portapapeles", "qué hay en el portapapeles", "portapapeles"]},
-        "clipboard_copy":  {"en": ["copy to clipboard", "copy"],
-                           "es": ["copiar al portapapeles", "copiar", "clonar"]},
-        "clipboard_paste": {"en": ["paste", "paste from clipboard"],
-                           "es": ["pegar", "pegar del portapapeles"]},
+        "clipboard_read": {
+            "en": ["read clipboard", "what's in clipboard", "clipboard"],
+            "es": ["lee portapapeles", "qué hay en el portapapeles", "portapapeles"],
+        },
+        "clipboard_copy": {"en": ["copy to clipboard", "copy"], "es": ["copiar al portapapeles", "copiar", "clonar"]},
+        "clipboard_paste": {"en": ["paste", "paste from clipboard"], "es": ["pegar", "pegar del portapapeles"]},
     },
     "screenshot": {
-        "take_screenshot": {"en": ["take screenshot", "screenshot", "capture screen"],
-                           "es": ["tomar captura", "captura", "captura de pantalla"]},
-        "screenshot_area": {"en": ["screenshot area", "capture region"],
-                           "es": ["captura de región", "captura área"]},
+        "take_screenshot": {
+            "en": ["take screenshot", "screenshot", "capture screen"],
+            "es": ["tomar captura", "captura", "captura de pantalla"],
+        },
+        "screenshot_area": {"en": ["screenshot area", "capture region"], "es": ["captura de región", "captura área"]},
     },
     "discord_notify": {
-        "discord_send":  {"en": ["send to discord", "discord message"],
-                         "es": ["enviar a discord", "mensaje a discord"]},
-        "discord_notify":{"en": ["notify discord", "discord notification"],
-                         "es": ["notificar discord", "avisa a discord", "notifica a discord"]},
+        "discord_send": {"en": ["send to discord", "discord message"], "es": ["enviar a discord", "mensaje a discord"]},
+        "discord_notify": {
+            "en": ["notify discord", "discord notification"],
+            "es": ["notificar discord", "avisa a discord", "notifica a discord"],
+        },
     },
     "spotify_control": {
-        "spotify_pause":    {"en": ["pause music", "pause spotify", "pause song"],
-                            "es": ["pausa música", "pausa spotify", "para la canción"]},
-        "spotify_resume":   {"en": ["resume music", "resume spotify", "continue music", "play music", "play spotify"],
-                            "es": ["reanuda música", "reanuda spotify", "continúa música", "pon música", "reproduce música"]},
-        "spotify_next":     {"en": ["next song", "next track", "skip song"],
-                            "es": ["siguiente canción", "siguiente tema", "salta canción"]},
-        "spotify_previous": {"en": ["previous song", "previous track", "go back song"],
-                            "es": ["canción anterior", "tema anterior", "vuelve canción"]},
-        "spotify_mute":     {"en": ["mute spotify", "mute music"],
-                            "es": ["silenciar spotify", "silenciar música"]},
-        "spotify_unmute":   {"en": ["unmute spotify", "unmute music"],
-                            "es": ["activar spotify", "activar música"]},
-        "spotify_volume":   {"en": ["spotify volume", "volume", "set volume"],
-                            "es": ["volumen spotify", "volumen", "ajustar volumen"]},
-        "spotify_status":   {"en": ["what's playing", "current song", "now playing"],
-                            "es": ["qué suena", "canción actual", "reproduciendo ahora"]},
-        "spotify_play":     {"en": ["play on spotify", "play song", "play track"],
-                            "es": ["reproduce en spotify", "pon canción", "reproduce tema"]},
+        "spotify_pause": {
+            "en": ["pause music", "pause spotify", "pause song"],
+            "es": ["pausa música", "pausa spotify", "para la canción"],
+        },
+        "spotify_resume": {
+            "en": ["resume music", "resume spotify", "continue music", "play music", "play spotify"],
+            "es": ["reanuda música", "reanuda spotify", "continúa música", "pon música", "reproduce música"],
+        },
+        "spotify_next": {
+            "en": ["next song", "next track", "skip song"],
+            "es": ["siguiente canción", "siguiente tema", "salta canción"],
+        },
+        "spotify_previous": {
+            "en": ["previous song", "previous track", "go back song"],
+            "es": ["canción anterior", "tema anterior", "vuelve canción"],
+        },
+        "spotify_mute": {"en": ["mute spotify", "mute music"], "es": ["silenciar spotify", "silenciar música"]},
+        "spotify_unmute": {"en": ["unmute spotify", "unmute music"], "es": ["activar spotify", "activar música"]},
+        "spotify_volume": {
+            "en": ["spotify volume", "volume", "set volume"],
+            "es": ["volumen spotify", "volumen", "ajustar volumen"],
+        },
+        "spotify_status": {
+            "en": ["what's playing", "current song", "now playing"],
+            "es": ["qué suena", "canción actual", "reproduciendo ahora"],
+        },
+        "spotify_play": {
+            "en": ["play on spotify", "play song", "play track"],
+            "es": ["reproduce en spotify", "pon canción", "reproduce tema"],
+        },
     },
     "weather": {
-        "get_weather":      {"en": ["weather", "how's the weather", "what's the temperature"],
-                            "es": ["clima", "tiempo", "qué tiempo hace", "temperatura"]},
-        "get_weather_city": {"en": ["weather in", "temperature in", "climate in"],
-                            "es": ["clima en", "tiempo en", "temperatura en"]},
+        "get_weather": {
+            "en": ["weather", "how's the weather", "what's the temperature"],
+            "es": ["clima", "tiempo", "qué tiempo hace", "temperatura"],
+        },
+        "get_weather_city": {
+            "en": ["weather in", "temperature in", "climate in"],
+            "es": ["clima en", "tiempo en", "temperatura en"],
+        },
     },
     "translator": {
-        "translate":              {"en": ["translate", "translation"],
-                                  "es": ["traduce", "traducir", "traducción"]},
-        "translate_to_english":   {"en": ["translate to english"],
-                                  "es": ["traduce al inglés", "traducir al inglés"]},
-        "translate_to_spanish":   {"en": ["translate to spanish"],
-                                  "es": ["traduce al español", "traducir al español"]},
+        "translate": {"en": ["translate", "translation"], "es": ["traduce", "traducir", "traducción"]},
+        "translate_to_english": {"en": ["translate to english"], "es": ["traduce al inglés", "traducir al inglés"]},
+        "translate_to_spanish": {"en": ["translate to spanish"], "es": ["traduce al español", "traducir al español"]},
     },
     "command_history": {
-        "last_command":   {"en": ["last command", "what was my last command", "previous command"],
-                           "es": ["último comando", "qué fue mi último comando", "comando anterior"]},
-        "command_history": {"en": ["command history", "recent commands", "what have I said"],
-                            "es": ["historial de comandos", "comandos recientes", "qué he dicho"]},
-        "clear_history":  {"en": ["clear history", "delete history", "clear command history"],
-                           "es": ["borrar historial", "eliminar historial", "limpiar historial"]},
+        "last_command": {
+            "en": ["last command", "what was my last command", "previous command"],
+            "es": ["último comando", "qué fue mi último comando", "comando anterior"],
+        },
+        "command_history": {
+            "en": ["command history", "recent commands", "what have I said"],
+            "es": ["historial de comandos", "comandos recientes", "qué he dicho"],
+        },
+        "clear_history": {
+            "en": ["clear history", "delete history", "clear command history"],
+            "es": ["borrar historial", "eliminar historial", "limpiar historial"],
+        },
     },
 }
 
@@ -558,7 +643,7 @@ def patterns_for(plugin: str, action: str) -> list[str]:
 
 def all_patterns() -> dict:
     """Return {plugin: {action: [patterns]}} for current language."""
-    out = {}
+    out: dict[str, dict[str, list[str]]] = {}
     for plugin, actions in INTENT_PATTERNS.items():
         out[plugin] = {}
         for action, langs in actions.items():

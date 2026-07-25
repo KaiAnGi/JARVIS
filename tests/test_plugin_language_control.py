@@ -1,6 +1,6 @@
 """Tests for plugins/language_control/plugin.py"""
 
-from core.language import set_lang, get_lang
+from core.language import get_lang, set_lang
 from plugins.language_control import plugin
 
 
