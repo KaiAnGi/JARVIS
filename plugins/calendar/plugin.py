@@ -1,20 +1,29 @@
 """calendar plugin - Google Calendar events."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime
 
 from googleapiclient.discovery import build
 
 from core.credentials_manager import get_credentials
-from core.language import resp, get_lang
+from core.language import get_lang, resp
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 _service = None
 
 MONTHS_ES = {
-    1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
-    5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
-    9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"
+    1: "enero",
+    2: "febrero",
+    3: "marzo",
+    4: "abril",
+    5: "mayo",
+    6: "junio",
+    7: "julio",
+    8: "agosto",
+    9: "septiembre",
+    10: "octubre",
+    11: "noviembre",
+    12: "diciembre",
 }
 
 
@@ -37,13 +46,13 @@ def _format_date(date_str: str) -> str:
         if "T" in date_str:
             dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         else:
-            dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-        
-        now = datetime.now(timezone.utc)
+            dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC)
+
+        now = datetime.now(UTC)
         today = now.date()
         event_date = dt.date()
         diff = (event_date - today).days
-        
+
         if get_lang() == "es":
             day = dt.day
             month = MONTHS_ES[dt.month]
@@ -86,13 +95,14 @@ def _handle(action: str, text: str, bus):
         bus.emit("speak", resp("cal_auth"))
         return
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if action == "list_events":
-        events_result = service.events().list(
-            calendarId="primary", timeMin=now.isoformat(),
-            maxResults=5, singleEvents=True, orderBy="startTime"
-        ).execute()
+        events_result = (
+            service.events()
+            .list(calendarId="primary", timeMin=now.isoformat(), maxResults=5, singleEvents=True, orderBy="startTime")
+            .execute()
+        )
         events = events_result.get("items", [])
         if not events:
             bus.emit("speak", resp("no_events"))
@@ -105,10 +115,11 @@ def _handle(action: str, text: str, bus):
         bus.emit("speak", resp("list_events", events="; ".join(summaries)))
 
     elif action == "next_event":
-        events_result = service.events().list(
-            calendarId="primary", timeMin=now.isoformat(),
-            maxResults=1, singleEvents=True, orderBy="startTime"
-        ).execute()
+        events_result = (
+            service.events()
+            .list(calendarId="primary", timeMin=now.isoformat(), maxResults=1, singleEvents=True, orderBy="startTime")
+            .execute()
+        )
         events = events_result.get("items", [])
         if not events:
             bus.emit("speak", resp("no_events"))

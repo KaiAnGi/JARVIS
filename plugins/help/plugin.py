@@ -2,7 +2,6 @@
 
 from core.language import get_lang, resp
 
-
 CATEGORIES_ES = {
     "hora": "Puedo decirte la hora y la fecha. Di: qué hora es, qué fecha hay hoy.",
     "calculadora": "Puedo hacer cálculos. Di: calcula cinco más tres.",
@@ -51,10 +50,10 @@ def handle(action: str, text: str, bus):
     elif action == "help_category":
         categories = CATEGORIES_ES if get_lang() == "es" else CATEGORIES_EN
         text_lower = text.lower()
-        
+
         for key, info in categories.items():
             if key in text_lower:
                 bus.emit("speak", info)
                 return
-        
+
         bus.emit("speak", resp("help_not_found"))

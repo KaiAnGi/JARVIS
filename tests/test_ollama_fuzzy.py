@@ -1,9 +1,9 @@
 """Tests for core/ollama_client.py and core/fuzzy_intent.py"""
 
-from unittest.mock import patch, MagicMock
 import json
+from unittest.mock import MagicMock, patch
 
-from core import ollama_client, fuzzy_intent
+from core import fuzzy_intent, ollama_client
 
 
 class TestOllamaClient:
@@ -34,9 +34,7 @@ class TestOllamaClient:
     @patch("core.ollama_client.urllib.request.urlopen")
     def test_chat_strips_think_tags(self, mock_urlopen):
         mock_resp = MagicMock()
-        mock_resp.read.return_value = json.dumps(
-            {"response": "<think>reasoning</think>actual answer"}
-        ).encode()
+        mock_resp.read.return_value = json.dumps({"response": "<think>reasoning</think>actual answer"}).encode()
         mock_resp.__enter__ = lambda s: s
         mock_resp.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_resp

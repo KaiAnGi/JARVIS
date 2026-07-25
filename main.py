@@ -1,6 +1,7 @@
 """Jarvis Voice Assistant - CLI entry point."""
 
 from core.config import load_env
+
 load_env()
 
 import threading

@@ -3,7 +3,8 @@
 import json
 import urllib.request
 from urllib.parse import quote_plus
-from core.language import resp, get_lang
+
+from core.language import get_lang, resp
 from core.text_utils import extract_after_keyword
 
 GEO_URL = "https://geocoding-api.open-meteo.com/v1/search"
@@ -16,7 +17,9 @@ def init(bus):
 
 def handle(action: str, text: str, bus):
     if action == "get_weather":
-        city = extract_after_keyword(text, ("weather", "clima", "tiempo", "temperatura", "how's the weather", "qué tiempo hace"))
+        city = extract_after_keyword(
+            text, ("weather", "clima", "tiempo", "temperatura", "how's the weather", "qué tiempo hace")
+        )
         if not city:
             city = "Madrid"
         _fetch_weather(city, bus)
@@ -56,15 +59,18 @@ def _fetch_weather(city: str, bus):
         wind = round(wx["wind_speed_10m"] / 3.6, 1)
         desc = _weather_code_to_text(wx["weather_code"])
 
-        bus.emit("speak", resp(
-            "weather_report",
-            city=city_name,
-            temp=temp,
-            feels=feels,
-            desc=desc,
-            humidity=humidity,
-            wind=wind,
-        ))
+        bus.emit(
+            "speak",
+            resp(
+                "weather_report",
+                city=city_name,
+                temp=temp,
+                feels=feels,
+                desc=desc,
+                humidity=humidity,
+                wind=wind,
+            ),
+        )
     except Exception as e:
         print(f"[WEATHER] Error: {e}")
         bus.emit("speak", resp("weather_error"))
@@ -72,22 +78,50 @@ def _fetch_weather(city: str, bus):
 
 def _weather_code_to_text(code: int) -> str:
     mapping_es = {
-        0: "despejado", 1: "mayormente despejado", 2: "parcialmente nublado", 3: "nublado",
-        45: "niebla", 48: "niebla con escarcha",
-        51: "llovizna ligera", 53: "llovizna", 55: "llovizna intensa",
-        61: "lluvia ligera", 63: "lluvia", 65: "lluvia intensa",
-        71: "nieve ligera", 73: "nieve", 75: "nieve intensa",
-        80: "chubascos ligeros", 81: "chubascos", 82: "chubascos intensos",
-        95: "tormenta", 96: "tormenta con granizo", 99: "tormenta fuerte con granizo",
+        0: "despejado",
+        1: "mayormente despejado",
+        2: "parcialmente nublado",
+        3: "nublado",
+        45: "niebla",
+        48: "niebla con escarcha",
+        51: "llovizna ligera",
+        53: "llovizna",
+        55: "llovizna intensa",
+        61: "lluvia ligera",
+        63: "lluvia",
+        65: "lluvia intensa",
+        71: "nieve ligera",
+        73: "nieve",
+        75: "nieve intensa",
+        80: "chubascos ligeros",
+        81: "chubascos",
+        82: "chubascos intensos",
+        95: "tormenta",
+        96: "tormenta con granizo",
+        99: "tormenta fuerte con granizo",
     }
     mapping_en = {
-        0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast",
-        45: "fog", 48: "rime fog",
-        51: "light drizzle", 53: "drizzle", 55: "heavy drizzle",
-        61: "light rain", 63: "rain", 65: "heavy rain",
-        71: "light snow", 73: "snow", 75: "heavy snow",
-        80: "light showers", 81: "showers", 82: "heavy showers",
-        95: "thunderstorm", 96: "thunderstorm with hail", 99: "severe thunderstorm with hail",
+        0: "clear",
+        1: "mostly clear",
+        2: "partly cloudy",
+        3: "overcast",
+        45: "fog",
+        48: "rime fog",
+        51: "light drizzle",
+        53: "drizzle",
+        55: "heavy drizzle",
+        61: "light rain",
+        63: "rain",
+        65: "heavy rain",
+        71: "light snow",
+        73: "snow",
+        75: "heavy snow",
+        80: "light showers",
+        81: "showers",
+        82: "heavy showers",
+        95: "thunderstorm",
+        96: "thunderstorm with hail",
+        99: "severe thunderstorm with hail",
     }
     mapping = mapping_es if get_lang() == "es" else mapping_en
     return mapping.get(code, f"code {code}")

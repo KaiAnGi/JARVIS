@@ -11,17 +11,28 @@ import pygetwindow as gw
 from core.language import resp
 
 APPS = {
-    "notepad": "notepad", "bloc de notas": "notepad",
-    "calculator": "calc", "calc": "calc", "calculadora": "calc",
-    "paint": "mspaint", "mspaint": "mspaint",
-    "explorer": "explorer", "file explorer": "explorer",
-    "explorador": "explorer", "explorador de archivos": "explorer",
-    "task manager": "taskmgr", "administrador de tareas": "taskmgr",
-    "terminal": "wt", "powershell": "pwsh", "cmd": "cmd",
+    "notepad": "notepad",
+    "bloc de notas": "notepad",
+    "calculator": "calc",
+    "calc": "calc",
+    "calculadora": "calc",
+    "paint": "mspaint",
+    "mspaint": "mspaint",
+    "explorer": "explorer",
+    "file explorer": "explorer",
+    "explorador": "explorer",
+    "explorador de archivos": "explorer",
+    "task manager": "taskmgr",
+    "administrador de tareas": "taskmgr",
+    "terminal": "wt",
+    "powershell": "pwsh",
+    "cmd": "cmd",
     "wordpad": "write",
-    "edge": "msedge", "microsoft edge": "msedge",
+    "edge": "msedge",
+    "microsoft edge": "msedge",
     "discord": "discord",
-    "obs": "obs64", "obs studio": "obs64",
+    "obs": "obs64",
+    "obs studio": "obs64",
     "winrar": "WinRAR",
 }
 
@@ -45,22 +56,38 @@ APPS_URL = {
 }
 
 USER_APPS_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "user_apps.json"
-_user_apps = {"apps": {}, "urls": {}}
+_user_apps: dict[str, dict] = {"apps": {}, "urls": {}}
 
 APP_ALIASES = {
-    "what that": "wattpad", "what but": "wattpad", "what tap": "wattpad",
-    "what bad": "wattpad", "what pad": "wattpad", "what pads": "wattpad",
-    "gen shin": "genshin", "jen shin": "genshin", "genshin impact": "genshin",
-    "hoyo play": "hoyoplay", "oyo play": "hoyoplay",
-    "five m": "fivem", "5 m": "fivem",
-    "this court": "discord", "this card": "discord", "disk or": "discord",
-    "ob s": "obs", "o b s": "obs",
-    "over wolf": "overwolf", "over walk": "overwolf",
-    "ld player": "ldplayer", "el de player": "ldplayer",
-    "mic tech": "miktex", "my tech": "miktex",
-    "u torrent": "utorrent", "you torrent": "utorrent",
+    "what that": "wattpad",
+    "what but": "wattpad",
+    "what tap": "wattpad",
+    "what bad": "wattpad",
+    "what pad": "wattpad",
+    "what pads": "wattpad",
+    "gen shin": "genshin",
+    "jen shin": "genshin",
+    "genshin impact": "genshin",
+    "hoyo play": "hoyoplay",
+    "oyo play": "hoyoplay",
+    "five m": "fivem",
+    "5 m": "fivem",
+    "this court": "discord",
+    "this card": "discord",
+    "disk or": "discord",
+    "ob s": "obs",
+    "o b s": "obs",
+    "over wolf": "overwolf",
+    "over walk": "overwolf",
+    "ld player": "ldplayer",
+    "el de player": "ldplayer",
+    "mic tech": "miktex",
+    "my tech": "miktex",
+    "u torrent": "utorrent",
+    "you torrent": "utorrent",
     "rock star": "rockstar",
-    "oh sue": "osu", "o s u": "osu",
+    "oh sue": "osu",
+    "o s u": "osu",
 }
 
 
@@ -115,7 +142,7 @@ def _open_app(text: str, bus):
 
     for article in ("el ", "la ", "los ", "las ", "un ", "una "):
         if name.startswith(article):
-            name = name[len(article):]
+            name = name[len(article) :]
             break
 
     if not name:
@@ -126,6 +153,7 @@ def _open_app(text: str, bus):
 
     if name in APPS_URL:
         import webbrowser
+
         webbrowser.open(APPS_URL[name])
         bus.emit("speak", resp("open_app", name=name))
         return
@@ -160,6 +188,7 @@ def _open_app(text: str, bus):
 
     if name in _user_apps["urls"]:
         import webbrowser
+
         webbrowser.open(_user_apps["urls"][name])
         bus.emit("speak", resp("open_app", name=name))
         return
@@ -168,6 +197,7 @@ def _open_app(text: str, bus):
         cmd = _user_apps["apps"][name]
         if cmd.startswith("http"):
             import webbrowser
+
             webbrowser.open(cmd)
             bus.emit("speak", resp("open_app", name=name))
             return

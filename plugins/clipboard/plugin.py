@@ -1,6 +1,7 @@
 """Clipboard plugin — copy, paste, read clipboard content."""
 
 import pyperclip
+
 from core.language import resp
 from core.text_utils import extract_after_keyword
 
@@ -36,6 +37,7 @@ def handle(action: str, text: str, bus):
             content = pyperclip.paste()
             if content:
                 import pyautogui
+
                 pyautogui.hotkey("ctrl", "v")
                 bus.emit("speak", resp("clipboard_pasted"))
             else:

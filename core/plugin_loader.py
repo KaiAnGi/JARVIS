@@ -3,9 +3,6 @@
 import importlib.util
 from pathlib import Path
 
-from core.language import all_patterns
-
-
 PLUGINS_DIR = Path(__file__).parent.parent / "plugins"
 
 

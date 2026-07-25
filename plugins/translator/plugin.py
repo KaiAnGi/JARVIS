@@ -3,6 +3,7 @@
 import json
 import urllib.request
 from urllib.parse import quote_plus
+
 from core.language import resp
 from core.text_utils import extract_after_keyword
 
@@ -62,9 +63,9 @@ def _parse_translate(text: str) -> dict | None:
             content = text[:idx].strip()
             for prefix in ("translate", "traduce", "traducir"):
                 if content.lower().startswith(prefix):
-                    content = content[len(prefix):].strip()
+                    content = content[len(prefix) :].strip()
                     break
-            target_lang = text[idx + len(marker):].strip()
+            target_lang = text[idx + len(marker) :].strip()
             lang_code = _lang_name_to_code(target_lang)
             if content and lang_code:
                 return {"text": content, "src": "auto", "dest": lang_code}
@@ -73,15 +74,38 @@ def _parse_translate(text: str) -> dict | None:
 
 def _lang_name_to_code(name: str) -> str:
     mapping = {
-        "english": "en", "inglés": "en", "ingles": "en", "en": "en",
-        "spanish": "es", "español": "es", "espanol": "es", "es": "es",
-        "french": "fr", "francés": "fr", "frances": "fr", "fr": "fr",
-        "german": "de", "alemán": "de", "aleman": "de", "de": "de",
-        "portuguese": "pt", "portugués": "pt", "pt": "pt",
-        "italian": "it", "italiano": "it", "it": "it",
-        "japanese": "ja", "japonés": "ja", "ja": "ja",
-        "chinese": "zh", "chino": "zh", "zh": "zh",
-        "russian": "ruso", "ru": "ru",
-        "arabic": "ar", "árabe": "ar", "ar": "ar",
+        "english": "en",
+        "inglés": "en",
+        "ingles": "en",
+        "en": "en",
+        "spanish": "es",
+        "español": "es",
+        "espanol": "es",
+        "es": "es",
+        "french": "fr",
+        "francés": "fr",
+        "frances": "fr",
+        "fr": "fr",
+        "german": "de",
+        "alemán": "de",
+        "aleman": "de",
+        "de": "de",
+        "portuguese": "pt",
+        "portugués": "pt",
+        "pt": "pt",
+        "italian": "it",
+        "italiano": "it",
+        "it": "it",
+        "japanese": "ja",
+        "japonés": "ja",
+        "ja": "ja",
+        "chinese": "zh",
+        "chino": "zh",
+        "zh": "zh",
+        "russian": "ruso",
+        "ru": "ru",
+        "arabic": "ar",
+        "árabe": "ar",
+        "ar": "ar",
     }
     return mapping.get(name.lower(), "")

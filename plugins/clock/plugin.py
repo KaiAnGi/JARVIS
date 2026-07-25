@@ -1,12 +1,11 @@
 """clock plugin - Alarms, timer, and stopwatch."""
 
 import threading
-import time
 from datetime import datetime, timedelta
 
-from core.language import resp, get_lang
+from core.language import get_lang, resp
 
-_alarms = []
+_alarms: list[dict] = []
 _alarms_lock = threading.Lock()
 _timer_thread = None
 _timer_cancel = threading.Event()
@@ -16,15 +15,15 @@ _stopwatch_running = False
 _stopwatch_elapsed = timedelta(0)
 
 _ACTIONS = {
-    "set_alarm":      lambda text, bus: _set_alarm(text, bus),
-    "cancel_alarm":   lambda text, bus: _cancel_alarm(text, bus),
-    "list_alarms":    lambda text, bus: _list_alarms(bus),
-    "start_timer":    lambda text, bus: _start_timer(text, bus),
-    "stop_timer":     lambda text, bus: _stop_timer(bus),
+    "set_alarm": lambda text, bus: _set_alarm(text, bus),
+    "cancel_alarm": lambda text, bus: _cancel_alarm(text, bus),
+    "list_alarms": lambda text, bus: _list_alarms(bus),
+    "start_timer": lambda text, bus: _start_timer(text, bus),
+    "stop_timer": lambda text, bus: _stop_timer(bus),
     "start_stopwatch": lambda text, bus: _start_stopwatch(bus),
-    "stop_stopwatch":  lambda text, bus: _stop_stopwatch(bus),
+    "stop_stopwatch": lambda text, bus: _stop_stopwatch(bus),
     "reset_stopwatch": lambda text, bus: _reset_stopwatch(bus),
-    "read_stopwatch":  lambda text, bus: _read_stopwatch(bus),
+    "read_stopwatch": lambda text, bus: _read_stopwatch(bus),
 }
 
 
@@ -39,6 +38,7 @@ def handle(action: str, text: str, bus):
 
 
 # ── Alarms ──────────────────────────────────────────────────────────
+
 
 def _set_alarm(text: str, bus):
     text_lower = text.lower()
@@ -76,9 +76,7 @@ def _set_alarm(text: str, bus):
     _schedule_alarm(alarm, bus)
 
     rep_text = _repetition_text(repetition, lang)
-    bus.emit("speak", resp("alarm_set",
-                           time=alarm_time.strftime("%H:%M"),
-                           repetition=rep_text))
+    bus.emit("speak", resp("alarm_set", time=alarm_time.strftime("%H:%M"), repetition=rep_text))
 
 
 def _schedule_alarm(alarm: dict, bus):
@@ -107,9 +105,7 @@ def _schedule_alarm(alarm: dict, bus):
                             _alarms.remove(alarm)
                     break
                 else:
-                    alarm["time"] = _next_occurrence(
-                        alarm["time"], alarm["repetition"]
-                    )
+                    alarm["time"] = _next_occurrence(alarm["time"], alarm["repetition"])
 
     t = threading.Thread(target=_alarm_thread, daemon=True)
     t.start()
@@ -143,8 +139,7 @@ def _cancel_alarm(text: str, bus):
 
         if _alarms:
             alarm = _alarms.pop()
-            bus.emit("speak", resp("alarm_cancelled",
-                                   time=alarm["time"].strftime("%H:%M")))
+            bus.emit("speak", resp("alarm_cancelled", time=alarm["time"].strftime("%H:%M")))
         else:
             bus.emit("speak", resp("alarm_none"))
 
@@ -167,6 +162,7 @@ def _list_alarms(bus):
 
 # ── Timer ───────────────────────────────────────────────────────────
 
+
 def _start_timer(text: str, bus):
     global _timer_thread, _timer_cancel
 
@@ -187,8 +183,7 @@ def _start_timer(text: str, bus):
     _timer_thread = threading.Thread(target=_timer_thread_fn, daemon=True)
     _timer_thread.start()
 
-    bus.emit("speak", resp("timer_started",
-                           time=_format_duration(duration)))
+    bus.emit("speak", resp("timer_started", time=_format_duration(duration)))
 
 
 def _stop_timer(bus):
@@ -198,6 +193,7 @@ def _stop_timer(bus):
 
 
 # ── Stopwatch ───────────────────────────────────────────────────────
+
 
 def _start_stopwatch(bus):
     global _stopwatch_start, _stopwatch_running, _stopwatch_elapsed
@@ -222,8 +218,7 @@ def _stop_stopwatch(bus):
 
         _stopwatch_elapsed = datetime.now() - _stopwatch_start
         _stopwatch_running = False
-    bus.emit("speak", resp("stopwatch_stopped",
-                           time=_format_duration(_stopwatch_elapsed)))
+    bus.emit("speak", resp("stopwatch_stopped", time=_format_duration(_stopwatch_elapsed)))
 
 
 def _reset_stopwatch(bus):
@@ -244,16 +239,15 @@ def _read_stopwatch(bus):
 
     if running:
         current = datetime.now() - start
-        bus.emit("speak", resp("stopwatch_elapsed",
-                               time=_format_duration(current)))
+        bus.emit("speak", resp("stopwatch_elapsed", time=_format_duration(current)))
     elif elapsed > timedelta(0):
-        bus.emit("speak", resp("stopwatch_paused",
-                               time=_format_duration(elapsed)))
+        bus.emit("speak", resp("stopwatch_paused", time=_format_duration(elapsed)))
     else:
         bus.emit("speak", resp("stopwatch_not_started"))
 
 
 # ── Helpers ─────────────────────────────────────────────────────────
+
 
 def _extract_time(text: str) -> str:
     for prefix in ("a las ", "for ", "at ", "para las "):

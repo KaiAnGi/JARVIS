@@ -2,25 +2,38 @@
 
 import time
 
-from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QTextEdit, QPushButton, QFrame,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
-from gui.styles import (
-    PRIMARY_COLOR, SECONDARY_COLOR, BG_DARK, BG_PANEL,
-    MAIN_STYLESHEET, PANEL_STYLE, BUTTON_STYLE, INPUT_STYLE, LOG_STYLE
-)
-from gui.widgets import ArcReactor, StatusIndicator
-from core.language import ui, toggle_lang, is_goodbye, set_lang
 import core.database as db
 import core.logger as logger
+from core.language import is_goodbye, toggle_lang, ui
+from gui.styles import (
+    BUTTON_STYLE,
+    INPUT_STYLE,
+    LOG_STYLE,
+    MAIN_STYLESHEET,
+    PANEL_STYLE,
+    PRIMARY_COLOR,
+    SECONDARY_COLOR,
+)
+from gui.widgets import ArcReactor, StatusIndicator
 
 
 class VoiceThread(QThread):
     """Background thread for voice processing with session mode."""
+
     speech_detected = pyqtSignal(str)
     wake_detected = pyqtSignal(str)
     session_started = pyqtSignal()
@@ -37,6 +50,7 @@ class VoiceThread(QThread):
 
     def run(self):
         import time
+
         while self._running:
             self._in_session = False
             self.wake_detector.start_listening()
@@ -284,9 +298,7 @@ class JarvisWindow(QMainWindow):
         self._listen_thread = None
 
     def start_voice_thread(self):
-        self.voice_thread = VoiceThread(
-            self.recognizer, self.wake_detector, self.router, self.bus
-        )
+        self.voice_thread = VoiceThread(self.recognizer, self.wake_detector, self.router, self.bus)
         self.voice_thread.wake_detected.connect(self._on_wake)
         self.voice_thread.speech_detected.connect(self._on_speech)
         self.voice_thread.session_started.connect(self._on_session_start)
@@ -330,6 +342,7 @@ class JarvisWindow(QMainWindow):
         except Exception as e:
             logger.log_error("Router", str(e))
             from core.language import resp
+
             self.bus.emit("speak", resp("error"))
             handled = False
         elapsed = (time.time() - t0) * 1000
@@ -341,6 +354,7 @@ class JarvisWindow(QMainWindow):
                 browser.handle("youtube_search", text, self.bus)
             else:
                 from core.language import resp
+
                 self.bus.emit("speak", resp("processing"))
                 self._try_fuzzy_intent(text)
         QTimer.singleShot(500, lambda: self.status_router.set_active(False))
@@ -348,20 +362,24 @@ class JarvisWindow(QMainWindow):
     def _try_fuzzy_intent(self, text):
         """Use Ollama to understand unmatched voice commands."""
         try:
-            from core.fuzzy_intent import match_fuzzy, is_ollama_ready
+            from core.fuzzy_intent import is_ollama_ready, match_fuzzy
+
             if not is_ollama_ready():
                 from core.language import resp
+
                 self.bus.emit("speak", resp("no_ollama"))
                 return
             result = match_fuzzy(text)
             if not result or result.get("action") == "unknown":
                 from core.language import resp
+
                 self.bus.emit("speak", resp("no_match"))
                 return
             self._execute_fuzzy_action(result)
         except Exception as e:
             logger.log_error("FuzzyIntent", str(e))
             from core.language import resp
+
             self.bus.emit("speak", resp("no_match"))
 
     def _execute_fuzzy_action(self, action: dict):
@@ -369,51 +387,77 @@ class JarvisWindow(QMainWindow):
         name = action.get("action", "")
         if name == "unknown":
             from core.language import resp
+
             self.bus.emit("speak", resp("no_match"))
             return
 
         _PARAM_BUILDERS = {
-            "open_app":       lambda a: f"open {a.get('app', '')}",
-            "web_search":     lambda a: f"search for {a.get('query', '')}",
+            "open_app": lambda a: f"open {a.get('app', '')}",
+            "web_search": lambda a: f"search for {a.get('query', '')}",
             "youtube_search": lambda a: f"youtube {a.get('query', '')}",
-            "calculate":      lambda a: f"calculate {a.get('expression', '')}",
-            "git_commit":     lambda a: f"git commit {a.get('message', '')}",
-            "set_alarm":      lambda a: self._build_alarm_text(a),
-            "start_timer":    lambda a: f"timer for {a.get('duration', '5')} {a.get('unit', 'minutes')}",
+            "calculate": lambda a: f"calculate {a.get('expression', '')}",
+            "git_commit": lambda a: f"git commit {a.get('message', '')}",
+            "set_alarm": lambda a: self._build_alarm_text(a),
+            "start_timer": lambda a: f"timer for {a.get('duration', '5')} {a.get('unit', 'minutes')}",
         }
 
         _STATIC_TEXT = {
-            "check_email": "check email", "read_email": "read email",
+            "check_email": "check email",
+            "read_email": "read email",
             "count_email": "how many emails",
-            "list_events": "what's on my calendar", "next_event": "what's next",
-            "get_time": "what time", "get_date": "what date",
-            "minimize_window": "minimize", "maximize_window": "maximize",
+            "list_events": "what's on my calendar",
+            "next_event": "what's next",
+            "get_time": "what time",
+            "get_date": "what date",
+            "minimize_window": "minimize",
+            "maximize_window": "maximize",
             "close_window": "close window",
-            "start_stopwatch": "start stopwatch", "stop_stopwatch": "stop stopwatch",
-            "read_stopwatch": "read stopwatch", "reset_stopwatch": "reset stopwatch",
-            "git_status": "git status", "git_push": "git push", "git_pull": "git pull",
-            "close_tab": "close tab", "new_tab": "new tab", "duplicate_tab": "duplicate tab",
-            "last_command": "last command", "command_history": "command history",
+            "start_stopwatch": "start stopwatch",
+            "stop_stopwatch": "stop stopwatch",
+            "read_stopwatch": "read stopwatch",
+            "reset_stopwatch": "reset stopwatch",
+            "git_status": "git status",
+            "git_push": "git push",
+            "git_pull": "git pull",
+            "close_tab": "close tab",
+            "new_tab": "new tab",
+            "duplicate_tab": "duplicate tab",
+            "last_command": "last command",
+            "command_history": "command history",
             "clear_history": "clear history",
             "help": "help",
         }
 
         _PLUGIN_MAP = {
-            "open_app": "system_control", "minimize_window": "system_control",
-            "maximize_window": "system_control", "close_window": "system_control",
-            "web_search": "browser", "youtube_search": "browser",
-            "check_email": "gmail", "read_email": "gmail", "count_email": "gmail",
-            "list_events": "calendar", "next_event": "calendar",
-            "get_time": "datetime_calc", "get_date": "datetime_calc",
+            "open_app": "system_control",
+            "minimize_window": "system_control",
+            "maximize_window": "system_control",
+            "close_window": "system_control",
+            "web_search": "browser",
+            "youtube_search": "browser",
+            "check_email": "gmail",
+            "read_email": "gmail",
+            "count_email": "gmail",
+            "list_events": "calendar",
+            "next_event": "calendar",
+            "get_time": "datetime_calc",
+            "get_date": "datetime_calc",
             "calculate": "datetime_calc",
-            "set_alarm": "clock", "start_timer": "clock",
-            "start_stopwatch": "clock", "stop_stopwatch": "clock",
-            "read_stopwatch": "clock", "reset_stopwatch": "clock",
-            "git_status": "git_control", "git_commit": "git_control",
-            "git_push": "git_control", "git_pull": "git_control",
-            "close_tab": "tab_control", "new_tab": "tab_control",
+            "set_alarm": "clock",
+            "start_timer": "clock",
+            "start_stopwatch": "clock",
+            "stop_stopwatch": "clock",
+            "read_stopwatch": "clock",
+            "reset_stopwatch": "clock",
+            "git_status": "git_control",
+            "git_commit": "git_control",
+            "git_push": "git_control",
+            "git_pull": "git_control",
+            "close_tab": "tab_control",
+            "new_tab": "tab_control",
             "duplicate_tab": "tab_control",
-            "last_command": "command_history", "command_history": "command_history",
+            "last_command": "command_history",
+            "command_history": "command_history",
             "clear_history": "command_history",
             "help": "help",
         }
@@ -421,12 +465,14 @@ class JarvisWindow(QMainWindow):
         plugin_name = _PLUGIN_MAP.get(name)
         if not plugin_name:
             from core.language import resp
+
             self.bus.emit("speak", resp("no_match"))
             return
 
         plugin = self.router._plugins.get(plugin_name)
         if not plugin:
             from core.language import resp
+
             self.bus.emit("speak", resp("no_match"))
             return
 

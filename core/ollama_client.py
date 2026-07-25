@@ -8,8 +8,8 @@ OLLAMA_URL = "http://localhost:11434"
 MODEL = os.environ.get("JARVIS_OLLAMA_MODEL", "qwen3:8b")
 
 # LLM generation limits
-MAX_TOKENS = 256              # Max response tokens (keeps latency ~2-3s)
-TEMPERATURE = 0.1             # Low temp for deterministic action selection
+MAX_TOKENS = 256  # Max response tokens (keeps latency ~2-3s)
+TEMPERATURE = 0.1  # Low temp for deterministic action selection
 
 
 def is_available() -> bool:

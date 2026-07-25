@@ -12,6 +12,7 @@ class TestHandle:
     @patch("plugins.git_control.plugin.Repo")
     def test_not_repo(self, MockRepo, bus):
         from git import InvalidGitRepositoryError
+
         MockRepo.side_effect = InvalidGitRepositoryError()
         plugin.handle("git_status", "git status", bus)
         bus.emit.assert_called_once()

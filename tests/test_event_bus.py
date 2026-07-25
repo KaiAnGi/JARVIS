@@ -26,7 +26,10 @@ class TestEventBus:
     def test_unsubscribe(self):
         bus = EventBus()
         received = []
-        callback = lambda data: received.append(data)
+
+        def callback(data):
+            received.append(data)
+
         bus.subscribe("test", callback)
         bus.unsubscribe("test", callback)
         bus.emit("test", "hello")

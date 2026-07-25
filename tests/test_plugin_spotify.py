@@ -1,7 +1,7 @@
 """Tests for plugins/spotify_control/plugin.py"""
 
-from unittest.mock import patch, MagicMock
 import json
+from unittest.mock import MagicMock, patch
 
 from plugins.spotify_control import plugin
 
@@ -95,9 +95,8 @@ class TestApiCallRetry:
     def test_no_infinite_recursion(self, mock_urlopen, mock_refresh, bus):
         """Verify _api_call doesn't recurse forever on repeated 401s."""
         from urllib.error import HTTPError
-        mock_urlopen.side_effect = HTTPError(
-            url="", code=401, msg="Unauthorized", hdrs=None, fp=None
-        )
+
+        mock_urlopen.side_effect = HTTPError(url="", code=401, msg="Unauthorized", hdrs=None, fp=None)
         plugin._api_call("PUT", "https://api.test", "token", bus, "spotify_pause")
         # Should emit error, not RecursionError
         bus.emit.assert_called()

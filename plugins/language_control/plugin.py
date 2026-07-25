@@ -1,6 +1,6 @@
 """language_control plugin - Switch language via voice."""
 
-from core.language import toggle_lang, set_lang, get_lang, resp
+from core.language import get_lang, resp, toggle_lang
 
 
 def init(bus):

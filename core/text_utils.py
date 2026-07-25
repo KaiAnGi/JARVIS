@@ -11,7 +11,7 @@ def extract_after_keyword(text: str, keywords: tuple) -> str:
     for kw in sorted(keywords, key=len, reverse=True):
         idx = lower.find(kw)
         if idx != -1:
-            after = text[idx + len(kw):].strip()
+            after = text[idx + len(kw) :].strip()
             if after:
                 return after
     return ""

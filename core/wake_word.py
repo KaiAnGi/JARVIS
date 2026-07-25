@@ -1,6 +1,7 @@
 """Wake word detection using openWakeWord."""
 
 import os
+
 import numpy as np
 import pyaudio
 from openwakeword.model import Model
@@ -11,6 +12,7 @@ def _find_models_dir() -> str:
     """Find openWakeWord models directory without hardcoding .venv path."""
     try:
         import openwakeword
+
         return os.path.join(os.path.dirname(openwakeword.__file__), "resources", "models")
     except (ImportError, AttributeError):
         pass

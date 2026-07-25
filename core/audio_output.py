@@ -1,7 +1,7 @@
 """Core audio output - Offline TTS via Windows SAPI5."""
 
-import threading
 import queue
+import threading
 
 import pythoncom
 import win32com.client
@@ -15,7 +15,7 @@ class Speaker:
     def __init__(self, rate: int = 0, volume: float = 1.0):
         self._rate = rate
         self._volume = volume
-        self._queue = queue.Queue()
+        self._queue: queue.Queue = queue.Queue()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
 
@@ -45,10 +45,9 @@ class Speaker:
         for i in range(voices.Count):
             v = voices.Item(i)
             desc = v.GetDescription()
-            if tag == "Spanish" and ("Spanish" in desc or "español" in desc.lower()):
-                voice.Voice = v
-                return
-            elif tag == "English" and "English" in desc:
+            if (tag == "Spanish" and ("Spanish" in desc or "español" in desc.lower())) or (
+                tag == "English" and "English" in desc
+            ):
                 voice.Voice = v
                 return
 
