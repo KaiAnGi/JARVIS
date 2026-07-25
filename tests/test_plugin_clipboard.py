@@ -9,6 +9,13 @@ pytest.importorskip("pyperclip", reason="pyperclip not installed")
 from core.language import set_lang
 from plugins.clipboard import plugin
 
+try:
+    import pyautogui  # noqa: F401
+
+    _has_pyautogui = True
+except ImportError:
+    _has_pyautogui = False
+
 
 class TestHandle:
     @patch("plugins.clipboard.plugin.pyperclip.paste", return_value="hello world")
@@ -64,6 +71,7 @@ class TestHandle:
         event, _msg = bus.emit.call_args[0]
         assert event == "speak"
 
+    @pytest.mark.skipif(not _has_pyautogui, reason="pyautogui not installed")
     @patch("pyautogui.hotkey")
     @patch("plugins.clipboard.plugin.pyperclip.paste", return_value="text")
     def test_paste(self, mock_paste, mock_hotkey, bus):
