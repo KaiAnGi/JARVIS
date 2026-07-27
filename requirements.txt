@@ -3,7 +3,7 @@
 -r requirements-test.txt
 
 # Runtime
-python-dotenv>=1.0
+python-dotenv>=1.2.2
 numpy>=1.24
 noisereduce>=3.0
 
