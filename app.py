@@ -15,14 +15,14 @@ from gui.tray import JarvisTray
 
 
 def main():
-    bus, router, speaker, recognizer, wake_detector = create_context()
+    ctx = create_context()
 
     # Qt App
     app = QApplication(sys.argv)
     app.setApplicationName("J.A.R.V.I.S.")
 
     # Window — start hidden, appears on wake word
-    window = JarvisWindow(recognizer, wake_detector, router, bus, speaker)
+    window = JarvisWindow(ctx.recognizer, ctx.wake_detector, ctx.router, ctx.bus, ctx.speaker)
     window.showMinimized()
     window.hide()
 
@@ -35,7 +35,8 @@ def main():
         window.activateWindow()
 
     def on_quit():
-        window.voice_thread.stop()
+        if window.voice_thread is not None:
+            window.voice_thread.stop()
         window.close()
         app.quit()
 
@@ -47,8 +48,8 @@ def main():
     # Cleanup on exit
     def cleanup():
         tray.stop()
-        recognizer.cleanup()
-        speaker.shutdown()
+        ctx.recognizer.cleanup()
+        ctx.speaker.shutdown()
 
     app.aboutToQuit.connect(cleanup)
 
