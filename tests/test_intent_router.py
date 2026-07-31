@@ -24,6 +24,13 @@ class TestIntentRouter:
         assert result is True
         mod.handle.assert_called_once()
 
+    def test_get_plugin_returns_module(self):
+        router = IntentRouter()
+        mod = self._make_module("browser")
+        router.register_plugin("browser", mod)
+        assert router.get_plugin("browser") is mod
+        assert router.get_plugin("missing") is None
+
     def test_route_no_match(self):
         set_lang("en")
         router = IntentRouter()

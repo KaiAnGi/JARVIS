@@ -18,6 +18,10 @@ class IntentRouter:
         """Register a plugin module by name."""
         self._plugins[name] = module
 
+    def get_plugin(self, name: str):
+        """Get a registered plugin module by name, or None if not registered."""
+        return self._plugins.get(name)
+
     def rebuild_patterns(self):
         """Rebuild pattern list from current language."""
         self._intents.clear()

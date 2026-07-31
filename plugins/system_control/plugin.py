@@ -132,19 +132,42 @@ def handle(action: str, text: str, bus):
         _close(bus)
 
 
-def _open_app(text: str, bus):
+def _clean_app_name(text: str) -> str:
+    """Strip command prefixes and articles from the spoken app name."""
     name = text.lower()
     for prefix in ("open", "launch", "abre", "iniciar"):
         if prefix in name:
             name = name.split(prefix, 1)[1]
             break
     name = name.strip()
-
     for article in ("el ", "la ", "los ", "las ", "un ", "una "):
         if name.startswith(article):
             name = name[len(article) :]
             break
+    return name.strip()
 
+
+def _launch(name: str, cmd: str, bus) -> bool:
+    """Launch a process. Emits success/failure. Returns True on success."""
+    try:
+        subprocess.Popen([cmd])
+        bus.emit("speak", resp("open_app", name=name))
+        return True
+    except Exception:
+        bus.emit("speak", resp("open_fail", name=name))
+        return False
+
+
+def _open_url(name: str, url: str, bus) -> bool:
+    import webbrowser
+
+    webbrowser.open(url)
+    bus.emit("speak", resp("open_app", name=name))
+    return True
+
+
+def _open_app(text: str, bus):
+    name = _clean_app_name(text)
     if not name:
         bus.emit("speak", resp("what_open"))
         return
@@ -152,71 +175,40 @@ def _open_app(text: str, bus):
     name = _resolve_name(name)
 
     if name in APPS_URL:
-        import webbrowser
-
-        webbrowser.open(APPS_URL[name])
-        bus.emit("speak", resp("open_app", name=name))
+        _open_url(name, APPS_URL[name], bus)
         return
 
     if name in APPS:
         cmd = APPS[name]
         which = shutil.which(cmd)
         if which:
-            try:
-                subprocess.Popen([which])
-                bus.emit("speak", resp("open_app", name=name))
-            except Exception:
-                bus.emit("speak", resp("open_fail", name=name))
+            _launch(name, which, bus)
             return
         if os.path.isfile(cmd):
-            try:
-                subprocess.Popen([cmd])
-                bus.emit("speak", resp("open_app", name=name))
-            except Exception:
-                bus.emit("speak", resp("open_fail", name=name))
+            _launch(name, cmd, bus)
             return
 
-    if name in APPS_PATH:
-        cmd = APPS_PATH[name]
-        if os.path.isfile(cmd):
-            try:
-                subprocess.Popen([cmd])
-                bus.emit("speak", resp("open_app", name=name))
-            except Exception:
-                bus.emit("speak", resp("open_fail", name=name))
-            return
+    if name in APPS_PATH and os.path.isfile(APPS_PATH[name]):
+        _launch(name, APPS_PATH[name], bus)
+        return
 
     if name in _user_apps["urls"]:
-        import webbrowser
-
-        webbrowser.open(_user_apps["urls"][name])
-        bus.emit("speak", resp("open_app", name=name))
+        _open_url(name, _user_apps["urls"][name], bus)
         return
 
     if name in _user_apps["apps"]:
         cmd = _user_apps["apps"][name]
         if cmd.startswith("http"):
-            import webbrowser
-
-            webbrowser.open(cmd)
-            bus.emit("speak", resp("open_app", name=name))
+            _open_url(name, cmd, bus)
             return
         if os.path.isfile(cmd):
-            try:
-                subprocess.Popen([cmd])
-                bus.emit("speak", resp("open_app", name=name))
-            except Exception:
-                bus.emit("speak", resp("open_fail", name=name))
+            _launch(name, cmd, bus)
             return
 
     which = shutil.which(name)
     if which:
-        try:
-            subprocess.Popen([which])
-            bus.emit("speak", resp("open_app", name=name))
-            return
-        except Exception:
-            pass
+        _launch(name, which, bus)
+        return
 
     bus.emit("speak", resp("open_fail", name=name))
 
