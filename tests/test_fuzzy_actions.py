@@ -71,8 +71,9 @@ class TestProcessUnmatched:
 
     def test_no_intent_emits_no_match(self, bus):
         router = _make_router()
-        with patch.object(fuzzy_intent, "is_ollama_ready", return_value=True), patch.object(
-            fuzzy_intent, "match_fuzzy", return_value=None
+        with (
+            patch.object(fuzzy_intent, "is_ollama_ready", return_value=True),
+            patch.object(fuzzy_intent, "match_fuzzy", return_value=None),
         ):
             handled = command_processor.process_unmatched("algo", router, bus)
         assert handled is False
@@ -81,8 +82,9 @@ class TestProcessUnmatched:
     def test_ollama_dispatches_plugin_action(self, bus):
         router = _make_router("system_control")
         intent = {"action": "open_app", "app": "notepad"}
-        with patch.object(fuzzy_intent, "is_ollama_ready", return_value=True), patch.object(
-            fuzzy_intent, "match_fuzzy", return_value=intent
+        with (
+            patch.object(fuzzy_intent, "is_ollama_ready", return_value=True),
+            patch.object(fuzzy_intent, "match_fuzzy", return_value=intent),
         ):
             handled = command_processor.process_unmatched("abre el notepad", router, bus)
         assert handled is True

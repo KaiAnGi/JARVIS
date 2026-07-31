@@ -80,7 +80,11 @@ class RouteTask(QRunnable):
             handled = self._router.route(self._text, self._bus)
             if not handled:
                 browser = self._router.get_plugin("browser")
-                if browser is not None and getattr(browser, "is_waiting_youtube", None) and browser.is_waiting_youtube():
+                if (
+                    browser is not None
+                    and getattr(browser, "is_waiting_youtube", None)
+                    and browser.is_waiting_youtube()
+                ):
                     browser.handle("youtube_search", self._text, self._bus)
                     handled = True
                 else:
