@@ -2,6 +2,7 @@
 
 import copy
 import json
+import threading
 from pathlib import Path
 
 FAVORITES_PATH = Path(__file__).resolve().parent.parent / "data" / "favorites.json"
@@ -11,6 +12,8 @@ DEFAULT_FAVORITES: dict[str, dict] = {
     "searches": {},
     "commands": {},
 }
+
+_lock = threading.RLock()
 
 
 def _load() -> dict:
@@ -31,29 +34,32 @@ def _save(data: dict):
 
 def add_app(name: str, path: str):
     """Add a favorite app."""
-    data = _load()
-    data["apps"][name.lower()] = {"path": path, "uses": data["apps"].get(name.lower(), {}).get("uses", 0)}
-    _save(data)
+    with _lock:
+        data = _load()
+        data["apps"][name.lower()] = {"path": path, "uses": data["apps"].get(name.lower(), {}).get("uses", 0)}
+        _save(data)
 
 
 def add_search(query: str):
     """Add a favorite search query."""
-    data = _load()
-    key = query.lower().strip()
-    entry = data["searches"].get(key, {"uses": 0})
-    entry["uses"] = entry.get("uses", 0) + 1
-    data["searches"][key] = entry
-    _save(data)
+    with _lock:
+        data = _load()
+        key = query.lower().strip()
+        entry = data["searches"].get(key, {"uses": 0})
+        entry["uses"] = entry.get("uses", 0) + 1
+        data["searches"][key] = entry
+        _save(data)
 
 
 def add_command(action: str, text: str):
     """Add a favorite command (a voice phrase the user frequently uses)."""
-    data = _load()
-    key = text.lower().strip()
-    entry = data["commands"].get(key, {"action": action, "uses": 0})
-    entry["uses"] = entry.get("uses", 0) + 1
-    data["commands"][key] = entry
-    _save(data)
+    with _lock:
+        data = _load()
+        key = text.lower().strip()
+        entry = data["commands"].get(key, {"action": action, "uses": 0})
+        entry["uses"] = entry.get("uses", 0) + 1
+        data["commands"][key] = entry
+        _save(data)
 
 
 def get_apps() -> dict:
@@ -87,12 +93,13 @@ def get_top_searches(limit: int = 5) -> list[dict]:
 
 def remove(category: str, key: str) -> bool:
     """Remove a favorite by category (apps/searches/commands) and key."""
-    data = _load()
-    if category in data and key.lower() in data[category]:
-        del data[category][key.lower()]
-        _save(data)
-        return True
-    return False
+    with _lock:
+        data = _load()
+        if category in data and key.lower() in data[category]:
+            del data[category][key.lower()]
+            _save(data)
+            return True
+        return False
 
 
 def search(query: str) -> list[dict]:
