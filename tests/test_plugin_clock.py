@@ -152,3 +152,33 @@ class TestStopwatch:
         plugin._stop_stopwatch(bus)
         emitted = bus.emit.call_args[0]
         assert "not_running" in emitted[1] or "no está en marcha" in emitted[1]
+
+
+class TestAlarmCancellation:
+    def setup_method(self):
+        with plugin._alarms_lock:
+            plugin._alarms.clear()
+
+    def test_cancel_alarm_stops_thread(self, bus):
+        plugin._set_alarm("alarma a las 12:00", bus)
+        with plugin._alarms_lock:
+            assert len(plugin._alarms) == 1
+            alarm = plugin._alarms[0]
+            assert not alarm["event"].is_set()
+
+        plugin._cancel_alarm("cancelar alarma", bus)
+
+        with plugin._alarms_lock:
+            assert len(plugin._alarms) == 0
+        assert alarm["event"].is_set()
+
+    def test_cancel_all_stops_all_threads(self, bus):
+        plugin._set_alarm("alarma a las 12:00", bus)
+        plugin._set_alarm("alarma a las 13:00", bus)
+        with plugin._alarms_lock:
+            alarms = list(plugin._alarms)
+            assert len(alarms) == 2
+
+        plugin._cancel_alarm("cancelar todas las alarmas", bus)
+
+        assert all(a["event"].is_set() for a in alarms)
