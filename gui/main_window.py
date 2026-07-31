@@ -1,8 +1,9 @@
 """Main Jarvis HUD window."""
 
 import time
+import traceback
 
-from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtCore import QObject, QRunnable, Qt, QThread, QThreadPool, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QFrame,
@@ -18,7 +19,8 @@ from PyQt6.QtWidgets import (
 
 import core.database as db
 import core.logger as logger
-from core.language import is_goodbye, toggle_lang, ui
+from core.command_processor import process_unmatched
+from core.language import is_goodbye, resp, toggle_lang, ui
 from gui.styles import (
     BUTTON_STYLE,
     INPUT_STYLE,
@@ -29,6 +31,68 @@ from gui.styles import (
     SECONDARY_COLOR,
 )
 from gui.widgets import ArcReactor, StatusIndicator
+
+
+class EventBridge(QObject):
+    """Forwards bus events to the GUI thread via queued Qt signals.
+
+    Plugins may emit events from worker threads; touching Qt widgets from
+    those threads is unsafe, so events are marshalled here instead.
+    """
+
+    speak = pyqtSignal(str)
+    language_changed = pyqtSignal(str)
+
+    def __init__(self, bus):
+        super().__init__()
+        bus.subscribe("speak", self.speak.emit)
+        bus.subscribe("language_changed", self.language_changed.emit)
+
+
+class ListenThread(QThread):
+    """Records a single utterance off the GUI thread."""
+
+    finished_listening = pyqtSignal(str)
+
+    def __init__(self, recognizer):
+        super().__init__()
+        self.recognizer = recognizer
+
+    def run(self):
+        text = self.recognizer.listen_once()
+        self.finished_listening.emit(text)
+
+
+class RouteTask(QRunnable):
+    """Runs intent routing off the GUI thread so blocking plugin calls don't freeze the UI."""
+
+    def __init__(self, router, bus, text, done_signal):
+        super().__init__()
+        self._router = router
+        self._bus = bus
+        self._text = text
+        self._done_signal = done_signal
+
+    def run(self):
+        t0 = time.time()
+        handled = False
+        try:
+            handled = self._router.route(self._text, self._bus)
+            if not handled:
+                browser = self._router.get_plugin("browser")
+                if browser is not None and getattr(browser, "is_waiting_youtube", None) and browser.is_waiting_youtube():
+                    browser.handle("youtube_search", self._text, self._bus)
+                    handled = True
+                else:
+                    self._bus.emit("speak", resp("processing"))
+                    handled = process_unmatched(self._text, self._router, self._bus)
+        except Exception:
+            logger.log_error("Router", traceback.format_exc())
+            self._bus.emit("speak", resp("error"))
+            handled = False
+        finally:
+            elapsed = (time.time() - t0) * 1000
+            self._done_signal.emit(handled, self._text, elapsed)
 
 
 class VoiceThread(QThread):
@@ -85,6 +149,8 @@ class VoiceThread(QThread):
 
 class JarvisWindow(QMainWindow):
     """Main HUD window styled like Iron Man's interface."""
+
+    _routing_done = pyqtSignal(bool, str, float)
 
     def __init__(self, recognizer, wake_detector, router, bus, speaker):
         super().__init__()
@@ -225,9 +291,14 @@ class JarvisWindow(QMainWindow):
         main_layout.addWidget(right_panel, stretch=1)
 
     def _connect_signals(self):
-        self.bus.subscribe("speak", lambda text: self._log("JARVIS", text))
         self.bus.subscribe("speak", lambda text: self.speaker.speak(text))
-        self.bus.subscribe("language_changed", lambda lang: self._on_language_changed(lang))
+        self._bridge = EventBridge(self.bus)
+        self._bridge.speak.connect(self._on_speak_event)
+        self._bridge.language_changed.connect(self._on_language_changed)
+        self._routing_done.connect(self._on_routing_done)
+
+    def _on_speak_event(self, text):
+        self._log("JARVIS", text)
 
     def _on_language_changed(self, lang):
         self.recognizer.switch_language()
@@ -261,19 +332,25 @@ class JarvisWindow(QMainWindow):
         self.clear_btn.setText(ui("clear"))
         self.lang_btn.setText(ui("lang_btn"))
 
+    def _route_async(self, text: str):
+        """Route a command on a worker thread so blocking plugins don't freeze the UI."""
+        self.status_router.set_active(True)
+        pool = QThreadPool.globalInstance()
+        if pool is not None:
+            pool.start(RouteTask(self.router, self.bus, text, self._routing_done))
+
+    def _on_routing_done(self, handled: bool, text: str, elapsed: float):
+        action = text.split()[0] if text else "voice"
+        db.save_command(action, text, success=handled, duration_ms=elapsed)
+        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
+
     def _on_text_submit(self):
         text = self.text_input.text().strip()
         if not text:
             return
         self.text_input.clear()
         self._log("YOU", text)
-        self.status_router.set_active(True)
-        t0 = time.time()
-        handled = self.router.route(text, self.bus)
-        elapsed = (time.time() - t0) * 1000
-        action = text.split()[0] if text else "text_input"
-        db.save_command(action, text, success=handled, duration_ms=elapsed)
-        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
+        self._route_async(text)
 
     def _on_manual_listen(self):
         if self._listen_thread is not None and self._listen_thread.isRunning():
@@ -282,17 +359,17 @@ class JarvisWindow(QMainWindow):
         self.status_stt.set_active(True)
         self._log("SYSTEM", ui("listening"))
 
-        def listen_in_thread():
-            text = self.recognizer.listen_once()
-            if text:
-                self._log("YOU", text)
-                self.router.route(text, self.bus)
-            self.arc_reactor.set_listening(False)
-            self.status_stt.set_active(False)
-
-        self._listen_thread = QThread(target=listen_in_thread)
+        self._listen_thread = ListenThread(self.recognizer)
+        self._listen_thread.finished_listening.connect(self._on_listen_finished_text)
         self._listen_thread.finished.connect(self._on_listen_finished)
         self._listen_thread.start()
+
+    def _on_listen_finished_text(self, text: str):
+        if text:
+            self._log("YOU", text)
+            self._route_async(text)
+        self.arc_reactor.set_listening(False)
+        self.status_stt.set_active(False)
 
     def _on_listen_finished(self):
         self._listen_thread = None
@@ -317,8 +394,8 @@ class JarvisWindow(QMainWindow):
         self.status_wake.set_active(False)
         self._log("SYSTEM", ui("session_active"))
         self.speaker.speak(ui("yes"))
-        browser = self.router._plugins.get("browser")
-        if browser and hasattr(browser, "reset_state"):
+        browser = self.router.get_plugin("browser")
+        if browser is not None and hasattr(browser, "reset_state"):
             browser.reset_state()
 
     def _on_session_end(self):
@@ -335,160 +412,7 @@ class JarvisWindow(QMainWindow):
 
     def _on_speech(self, text):
         self._log("YOU", text)
-        self.status_router.set_active(True)
-        t0 = time.time()
-        try:
-            handled = self.router.route(text, self.bus)
-        except Exception as e:
-            logger.log_error("Router", str(e))
-            from core.language import resp
-
-            self.bus.emit("speak", resp("error"))
-            handled = False
-        elapsed = (time.time() - t0) * 1000
-        action = text.split()[0] if text else "voice"
-        db.save_command(action, text, success=handled, duration_ms=elapsed)
-        if not handled:
-            browser = self.router._plugins.get("browser")
-            if browser and hasattr(browser, "is_waiting_youtube") and browser.is_waiting_youtube():
-                browser.handle("youtube_search", text, self.bus)
-            else:
-                from core.language import resp
-
-                self.bus.emit("speak", resp("processing"))
-                self._try_fuzzy_intent(text)
-        QTimer.singleShot(500, lambda: self.status_router.set_active(False))
-
-    def _try_fuzzy_intent(self, text):
-        """Use Ollama to understand unmatched voice commands."""
-        try:
-            from core.fuzzy_intent import is_ollama_ready, match_fuzzy
-
-            if not is_ollama_ready():
-                from core.language import resp
-
-                self.bus.emit("speak", resp("no_ollama"))
-                return
-            result = match_fuzzy(text)
-            if not result or result.get("action") == "unknown":
-                from core.language import resp
-
-                self.bus.emit("speak", resp("no_match"))
-                return
-            self._execute_fuzzy_action(result)
-        except Exception as e:
-            logger.log_error("FuzzyIntent", str(e))
-            from core.language import resp
-
-            self.bus.emit("speak", resp("no_match"))
-
-    def _execute_fuzzy_action(self, action: dict):
-        """Execute an action returned by fuzzy intent matching."""
-        name = action.get("action", "")
-        if name == "unknown":
-            from core.language import resp
-
-            self.bus.emit("speak", resp("no_match"))
-            return
-
-        _PARAM_BUILDERS = {
-            "open_app": lambda a: f"open {a.get('app', '')}",
-            "web_search": lambda a: f"search for {a.get('query', '')}",
-            "youtube_search": lambda a: f"youtube {a.get('query', '')}",
-            "calculate": lambda a: f"calculate {a.get('expression', '')}",
-            "git_commit": lambda a: f"git commit {a.get('message', '')}",
-            "set_alarm": lambda a: self._build_alarm_text(a),
-            "start_timer": lambda a: f"timer for {a.get('duration', '5')} {a.get('unit', 'minutes')}",
-        }
-
-        _STATIC_TEXT = {
-            "check_email": "check email",
-            "read_email": "read email",
-            "count_email": "how many emails",
-            "list_events": "what's on my calendar",
-            "next_event": "what's next",
-            "get_time": "what time",
-            "get_date": "what date",
-            "minimize_window": "minimize",
-            "maximize_window": "maximize",
-            "close_window": "close window",
-            "start_stopwatch": "start stopwatch",
-            "stop_stopwatch": "stop stopwatch",
-            "read_stopwatch": "read stopwatch",
-            "reset_stopwatch": "reset stopwatch",
-            "git_status": "git status",
-            "git_push": "git push",
-            "git_pull": "git pull",
-            "close_tab": "close tab",
-            "new_tab": "new tab",
-            "duplicate_tab": "duplicate tab",
-            "last_command": "last command",
-            "command_history": "command history",
-            "clear_history": "clear history",
-            "help": "help",
-        }
-
-        _PLUGIN_MAP = {
-            "open_app": "system_control",
-            "minimize_window": "system_control",
-            "maximize_window": "system_control",
-            "close_window": "system_control",
-            "web_search": "browser",
-            "youtube_search": "browser",
-            "check_email": "gmail",
-            "read_email": "gmail",
-            "count_email": "gmail",
-            "list_events": "calendar",
-            "next_event": "calendar",
-            "get_time": "datetime_calc",
-            "get_date": "datetime_calc",
-            "calculate": "datetime_calc",
-            "set_alarm": "clock",
-            "start_timer": "clock",
-            "start_stopwatch": "clock",
-            "stop_stopwatch": "clock",
-            "read_stopwatch": "clock",
-            "reset_stopwatch": "clock",
-            "git_status": "git_control",
-            "git_commit": "git_control",
-            "git_push": "git_control",
-            "git_pull": "git_control",
-            "close_tab": "tab_control",
-            "new_tab": "tab_control",
-            "duplicate_tab": "tab_control",
-            "last_command": "command_history",
-            "command_history": "command_history",
-            "clear_history": "command_history",
-            "help": "help",
-        }
-
-        plugin_name = _PLUGIN_MAP.get(name)
-        if not plugin_name:
-            from core.language import resp
-
-            self.bus.emit("speak", resp("no_match"))
-            return
-
-        plugin = self.router._plugins.get(plugin_name)
-        if not plugin:
-            from core.language import resp
-
-            self.bus.emit("speak", resp("no_match"))
-            return
-
-        text = _PARAM_BUILDERS.get(name, lambda a: _STATIC_TEXT.get(name, ""))(action)
-        plugin.handle(name, text, self.bus)
-
-    @staticmethod
-    def _build_alarm_text(action: dict) -> str:
-        text = f"set alarm at {action.get('time', '')}"
-        rep = action.get("repetition", "none")
-        msg = action.get("message", "")
-        if rep != "none":
-            text += f" {rep}"
-        if msg:
-            text += f" message {msg}"
-        return text
+        self._route_async(text)
 
     def closeEvent(self, event):
         logger.log_event("SYSTEM", "J.A.R.V.I.S. shutting down")
