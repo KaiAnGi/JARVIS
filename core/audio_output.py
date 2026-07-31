@@ -32,7 +32,13 @@ class Speaker:
                     break
                 if item == "__switch__":
                     self._apply_voice(voice)
-                elif isinstance(item, str):
+                elif isinstance(item, tuple):
+                    key, value = item
+                    if key == "rate":
+                        voice.Rate = value
+                    elif key == "volume":
+                        voice.Volume = int(value * 100)
+                elif isinstance(item, str) and item.strip():
                     voice.Speak(item, 0)
         except Exception as e:
             print(f"[SPEAKER] ERROR: {e}")
@@ -63,6 +69,9 @@ class Speaker:
 
     def set_rate(self, rate: int):
         self._rate = rate
+        self._queue.put(("rate", rate))
 
     def set_volume(self, volume: float):
-        self._volume = max(0.0, min(1.0, volume))
+        volume = max(0.0, min(1.0, volume))
+        self._volume = volume
+        self._queue.put(("volume", volume))

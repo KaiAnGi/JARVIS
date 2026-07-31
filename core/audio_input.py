@@ -30,9 +30,8 @@ class SpeechRecognizer:
 
     MODEL_DIR = Path(__file__).parent.parent / "models"
 
-    def __init__(self, model_name: str = None, sample_rate: int = 16000, vad_level: int = 2):
+    def __init__(self, model_name: str = None, sample_rate: int = 16000):
         self.sample_rate = sample_rate
-        self._vad_level = vad_level
         self._nr = nr if _HAS_NR else None
         self._models = {}
         self._current_lang = get_lang()
@@ -119,7 +118,6 @@ class SpeechRecognizer:
             "timer",
             "email",
             "calendar",
-            "reproduce",
         )
         es_score = sum(1 for m in es_markers if m in text_lower)
         en_score = sum(1 for m in en_markers if m in text_lower)
@@ -150,31 +148,13 @@ class SpeechRecognizer:
         energy = np.sqrt(np.mean(reduced**2))
         return energy > ENERGY_THRESHOLD
 
-    def listen_once(self) -> str:
-        """Block until a complete utterance is recognized, then return text."""
-        with self._lock:
-            self._open_stream()
-        while True:
-            with self._lock:
-                if self._stream is None:
-                    return ""
-            try:
-                data = self._stream.read(4096, exception_on_overflow=False)
-            except Exception:
-                return ""
-            if not self._is_speech(data):
-                continue
-            with self._lock:
-                if self._rec is None:
-                    return ""
-                if self._rec.AcceptWaveform(data):
-                    result = json.loads(self._rec.Result())
-                    text = result.get("text", "").strip()
-                    if text:
-                        return text
+    def _listen_once(self, detect_lang: bool) -> tuple[str, str]:
+        """Block until a complete utterance is recognized.
 
-    def listen_once_auto_lang(self) -> tuple[str, str]:
-        """Like listen_once but returns (text, detected_lang)."""
+        Returns ``(text, detected_lang_or_empty)``. The language is only
+        detected when ``detect_lang`` is True; otherwise the second value
+        is always "".
+        """
         with self._lock:
             self._open_stream()
         while True:
@@ -194,12 +174,18 @@ class SpeechRecognizer:
                     result = json.loads(self._rec.Result())
                     text = result.get("text", "").strip()
                     if text:
-                        detected = self.auto_detect_language(text)
-                        return text, detected or self._current_lang
+                        if detect_lang:
+                            detected = self.auto_detect_language(text)
+                            return text, detected or self._current_lang
+                        return text, ""
 
-    def set_vad_level(self, level: int):
-        """Set noise reduction aggressiveness (0-3). 0=least, 3=most."""
-        self._vad_level = max(0, min(3, level))
+    def listen_once(self) -> str:
+        """Block until a complete utterance is recognized, then return text."""
+        return self._listen_once(False)[0]
+
+    def listen_once_auto_lang(self) -> tuple[str, str]:
+        """Like listen_once but returns (text, detected_lang)."""
+        return self._listen_once(True)
 
     def stop(self):
         if self._stream:
