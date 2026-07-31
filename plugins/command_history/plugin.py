@@ -28,8 +28,7 @@ def handle(action: str, text: str, bus):
         bus.emit("speak", resp("history_list", commands="\n".join(lines)))
 
     elif action == "clear_history":
-        from core.database import _connect
+        from core.database import clear_command_history
 
-        with _connect() as conn:
-            conn.execute("DELETE FROM commands")
+        clear_command_history()
         bus.emit("speak", resp("history_cleared"))
