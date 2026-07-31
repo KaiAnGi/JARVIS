@@ -46,7 +46,7 @@
 | **Discord** | Send messages/notifications to Discord via webhook |
 | **Chitchat** | Greetings, jokes, status, compliments |
 | **Command History** | Review past voice commands |
-| **Fuzzy Intent** | Unrecognized commands are understood via local LLM (Ollama) |
+| **Fuzzy Intent** | Unrecognized commands are understood via local LLM (Ollama), routed through a strict action allowlist |
 | **Help** | Interactive help by category |
 
 ---
@@ -60,14 +60,18 @@ launch.bat                     ← One-click launcher (creates venv, installs de
 ├── core/
 │   ├── audio_input.py         ← Vosk STT + noise reduction (offline)
 │   ├── audio_output.py        ← SAPI5 TTS (text-to-speech)
+│   ├── bootstrap.py           ← create_context() dependency container (AppContext)
+│   ├── command_processor.py   ← Shared fallback for unmatched commands (CLI + GUI)
 │   ├── config.py              ← .env loader (python-dotenv)
 │   ├── database.py            ← SQLite command history + favorites
 │   ├── event_bus.py           ← Pub/sub event system (exception-safe)
 │   ├── favorites.py           ← Favorite websites manager
+│   ├── file_secure.py         ← Restrict file ACLs on Windows (tokens)
+│   ├── fuzzy_actions.py       ← LLM action allowlist (only whitelisted actions run)
 │   ├── fuzzy_intent.py        ← Ollama LLM for unmatched commands
 │   ├── intent_router.py       ← Longest-pattern-match routing
 │   ├── language.py            ← Bilingual manager (ES/EN) + all intent patterns
-│   ├── logger.py              ← Structured logging with daily rotation
+│   ├── logger.py              ← Structured logging with daily rotation + secret redaction
 │   ├── ollama_client.py       ← Local LLM inference client
 │   ├── plugin_loader.py       ← Auto-discovers plugins/
 │   ├── credentials_manager.py ← Google OAuth2
@@ -104,7 +108,9 @@ launch.bat                     ← One-click launcher (creates venv, installs de
 │   ├── user_apps.json         ← Personal app paths (gitignored)
 │   └── user_apps.json.example ← Template for custom apps
 ├── data/
-│   └── jarvis.db              ← SQLite database (gitignored)
+│   ├── jarvis.db              ← SQLite database (gitignored)
+│   ├── logs/                  ← Daily rotated logs (gitignored)
+│   └── screenshots/           ← Captured screenshots (gitignored)
 └── models/
     ├── vosk-model-small-es-0.42/   ← Spanish STT
     └── vosk-model-small-en-us-0.15/ ← English STT
@@ -540,6 +546,15 @@ To add your own app shortcuts, create `config/user_apps.json` (gitignored):
 ```
 
 Then say "abre myapp" or "open myapp". See `config/user_apps.json.example` for a template.
+
+---
+
+## Security
+
+- **Token files** (`config/token.json`, Spotify tokens) are restricted to the current Windows user via `core/file_secure.py` when saved.
+- **LLM execution allowlist**: the local LLM never runs arbitrary actions. Its output is mapped through `core/fuzzy_actions.py`, which only permits a fixed set of plugin commands.
+- **Prompt-injection mitigation**: the user's spoken text is always treated as data, never as instructions to the LLM.
+- **Log redaction**: secrets (API keys, tokens, passwords) are masked before being written to logs (`core/logger.py`).
 
 ---
 
