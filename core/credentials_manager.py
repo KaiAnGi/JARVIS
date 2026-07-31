@@ -6,6 +6,8 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
+from core.file_secure import restrict_file
+
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 CREDENTIALS_FILE = CONFIG_DIR / "credentials.json"
 TOKEN_FILE = CONFIG_DIR / "token.json"
@@ -44,6 +46,7 @@ def get_credentials(scopes: list[str] = None) -> Credentials | None:
                 return None
         try:
             TOKEN_FILE.write_text(creds.to_json())
+            restrict_file(TOKEN_FILE)
         except Exception:
             pass
     return creds

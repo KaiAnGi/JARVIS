@@ -9,6 +9,7 @@ _alarms: list[dict] = []
 _alarms_lock = threading.Lock()
 _timer_thread = None
 _timer_cancel = threading.Event()
+_timer_generation = 0
 _stopwatch_lock = threading.Lock()
 _stopwatch_start = None
 _stopwatch_running = False
@@ -68,6 +69,7 @@ def _set_alarm(text: str, bus):
         "time": alarm_time,
         "message": message,
         "repetition": repetition,
+        "event": threading.Event(),
     }
     with _alarms_lock:
         alarm["id"] = len(_alarms)
@@ -91,9 +93,7 @@ def _schedule_alarm(alarm: dict, bus):
                 continue
 
             wait_seconds = (target - now).total_seconds()
-            _timer_cancel.wait(wait_seconds)
-
-            if _timer_cancel.is_set():
+            if alarm["event"].wait(wait_seconds):
                 return
 
             if datetime.now() >= target:
@@ -131,14 +131,17 @@ def _cancel_alarm(text: str, bus):
     text_lower = text.lower()
 
     with _alarms_lock:
-        if "all" in text_lower or "todos" in text_lower:
+        if "all" in text_lower or "todos" in text_lower or "todas" in text_lower:
             count = len(_alarms)
+            for alarm in _alarms:
+                alarm["event"].set()
             _alarms.clear()
             bus.emit("speak", resp("alarm_cancel_all", count=count))
             return
 
         if _alarms:
             alarm = _alarms.pop()
+            alarm["event"].set()
             bus.emit("speak", resp("alarm_cancelled", time=alarm["time"].strftime("%H:%M")))
         else:
             bus.emit("speak", resp("alarm_none"))
@@ -164,7 +167,7 @@ def _list_alarms(bus):
 
 
 def _start_timer(text: str, bus):
-    global _timer_thread, _timer_cancel
+    global _timer_thread, _timer_cancel, _timer_generation
 
     text_lower = text.lower()
     duration = _extract_duration(text_lower)
@@ -174,10 +177,12 @@ def _start_timer(text: str, bus):
 
     _timer_cancel.set()
     _timer_cancel.clear()
+    _timer_generation += 1
+    generation = _timer_generation
 
     def _timer_thread_fn():
         _timer_cancel.wait(duration.total_seconds())
-        if not _timer_cancel.is_set():
+        if not _timer_cancel.is_set() and generation == _timer_generation:
             bus.emit("speak", resp("timer_done"))
 
     _timer_thread = threading.Thread(target=_timer_thread_fn, daemon=True)
@@ -187,8 +192,9 @@ def _start_timer(text: str, bus):
 
 
 def _stop_timer(bus):
-    global _timer_cancel
+    global _timer_cancel, _timer_generation
     _timer_cancel.set()
+    _timer_generation += 1
     bus.emit("speak", resp("timer_stopped"))
 
 
