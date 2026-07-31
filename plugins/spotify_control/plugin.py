@@ -5,7 +5,9 @@ import json
 import os
 import threading
 import urllib.request
+from pathlib import Path
 
+from core.file_secure import restrict_file
 from core.language import resp
 from core.text_utils import extract_after_keyword
 
@@ -186,6 +188,7 @@ def _save_token():
                 cache_snapshot = dict(_token_cache)
             with open(TOKEN_PATH, "w") as f:
                 json.dump(cache_snapshot, f)
+            restrict_file(Path(TOKEN_PATH))
         except Exception:
             pass
 

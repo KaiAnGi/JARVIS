@@ -1,6 +1,7 @@
 """Persistent text logging to daily log files using stdlib logging."""
 
 import logging
+import re
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
@@ -8,6 +9,19 @@ from pathlib import Path
 LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "logs"
 
 _logger = None
+
+_SECRET_PATTERNS = [
+    re.compile(r"(?i)\b(bearer|basic)\s+[a-z0-9._~+/=-]+"),
+    re.compile(r"(?i)\b(api[_-]?key|secret|token|password|passwd|authorization)\b\s*[:=]\s*\S+"),
+]
+
+
+def _redact(text: str) -> str:
+    """Replace likely secret values with a placeholder before logging."""
+    redacted = text
+    for pattern in _SECRET_PATTERNS:
+        redacted = pattern.sub("[REDACTED]", redacted)
+    return redacted
 
 
 def _get_logger() -> logging.Logger:
@@ -53,7 +67,7 @@ def log_command(action: str, parameters: str = "", success: bool = True, duratio
     status = "OK" if success else "FAIL"
     msg = f"[CMD] [{status}] {action}"
     if parameters:
-        msg += f" | {parameters}"
+        msg += f" | {_redact(parameters)}"
     if duration_ms:
         msg += f" | {duration_ms:.0f}ms"
     logger.info(msg)
