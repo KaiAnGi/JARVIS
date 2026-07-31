@@ -3,9 +3,9 @@
 -r requirements-test.txt
 
 # Runtime
-python-dotenv>=1.0
+python-dotenv>=1.2.2
 numpy>=2.4.6
-noisereduce>=3.0
+noisereduce>=3.0.3
 
 # Audio
 vosk==0.3.45
@@ -23,7 +23,7 @@ pygetwindow==0.0.9
 pyautogui==0.9.54
 
 # Plugins
-gitpython==3.1.56
+gitpython==3.1.57
 google-api-python-client==2.198.0
 google-auth-httplib2==0.4.0
 google-auth-oauthlib==1.4.0
