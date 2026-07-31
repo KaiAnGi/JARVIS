@@ -52,6 +52,7 @@ models/
 
 # Logs
 *.log
+data/logs/
 
 # User data
 data/jarvis.db
