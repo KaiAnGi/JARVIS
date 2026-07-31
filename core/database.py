@@ -132,6 +132,12 @@ def get_frequent_commands(limit: int = 10) -> list[dict]:
     return [{"action": r[0], "count": r[1]} for r in rows]
 
 
+def clear_command_history():
+    """Delete all logged commands."""
+    with _connect() as conn:
+        conn.execute("DELETE FROM commands")
+
+
 def get_stats() -> dict:
     """Get usage statistics."""
     with _connect() as conn:

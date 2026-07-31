@@ -61,6 +61,14 @@ class TestDatabase:
         assert stats["total_commands"] == 0
         assert stats["success_rate"] == "0%"
 
+    def test_clear_command_history(self, tmp_db):
+        tmp_db.save_command("open_app", "notepad")
+        tmp_db.save_command("web_search", "cats")
+        assert len(tmp_db.get_command_history()) == 2
+        tmp_db.clear_command_history()
+        assert tmp_db.get_command_history() == []
+        assert tmp_db.get_stats()["total_commands"] == 0
+
     def test_conversations_ordered_by_id(self, tmp_db):
         tmp_db.save_conversation("YOU", "first", 1)
         tmp_db.save_conversation("YOU", "second", 1)
