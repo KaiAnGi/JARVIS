@@ -1,5 +1,6 @@
 """Tests for plugins/system_control/plugin.py"""
 
+from pathlib import Path
 from unittest.mock import patch
 
 from core.language import set_lang
@@ -29,22 +30,21 @@ class TestOpenBrowser:
         popen.assert_not_called()
         bus.emit.assert_called_once_with("speak", plugin.resp("browser_already_open"))
 
-    def test_chrome_preferred_path_used(self, bus):
+    def test_chrome_uses_resolved_exe(self, bus):
         set_lang("es")
-        chrome = plugin.CHROME_CANDIDATES[0]
         with (
+            patch.object(plugin, "_resolve_exe", return_value=r"C:\chrome\chrome.exe"),
             patch("os.path.isfile", return_value=True),
             patch.object(plugin, "_focus_or_maximize_browser", return_value=False),
             patch("subprocess.Popen") as popen,
         ):
             plugin._open_app("open chrome", bus)
-        popen.assert_called_once_with([chrome])
+        popen.assert_called_once_with([r"C:\chrome\chrome.exe"])
 
     def test_falls_back_to_default_browser(self, bus):
         set_lang("es")
         with (
             patch.object(plugin, "_default_browser_exe", return_value=None),
-            patch("os.path.isfile", return_value=False),
             patch("webbrowser.open") as wb,
         ):
             plugin._open_app("abre el navegador", bus)
@@ -66,3 +66,28 @@ class TestOpenBrowser:
         )
         assert plugin._parse_exe_from_command(r"C:\path\app.exe %1") == r"C:\path\app.exe"
         assert plugin._parse_exe_from_command('""') is None
+
+
+class TestResolveExe:
+    def test_uses_path_first(self):
+        with patch.object(plugin.shutil, "which", return_value=r"C:\apps\app.exe"):
+            assert plugin._resolve_exe("app") == r"C:\apps\app.exe"
+
+    def test_office_apps_resolve_via_exe_name(self, bus):
+        set_lang("es")
+        word = r"C:\office\WINWORD.EXE"
+        with patch.object(plugin, "_resolve_exe", return_value=word) as resolve, patch("subprocess.Popen") as popen:
+            plugin._open_app("abre word", bus)
+        resolve.assert_called_once_with("WINWORD.EXE")
+        popen.assert_called_once_with([word])
+        bus.emit.assert_called_once_with("speak", plugin.resp("open_app", name="word"))
+
+
+class TestNoExposedPaths:
+    def test_no_hardcoded_program_paths_in_source(self):
+        source = Path(plugin.__file__).read_text(encoding="utf-8")
+        assert "C:\\Program Files" not in source
+
+    def test_no_machine_specific_constants(self):
+        assert not hasattr(plugin, "APPS_PATH")
+        assert not hasattr(plugin, "CHROME_CANDIDATES")

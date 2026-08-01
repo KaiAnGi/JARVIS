@@ -36,19 +36,18 @@ APPS = {
     "winrar": "WinRAR",
 }
 
-APPS_PATH = {
-    "word": r"***REMOVED***",
-    "microsoft word": r"***REMOVED***",
-    "excel": r"***REMOVED***",
-    "microsoft excel": r"***REMOVED***",
-    "powerpoint": r"***REMOVED***",
-    "microsoft powerpoint": r"***REMOVED***",
+APPS_EXE = {
+    "word": "WINWORD.EXE",
+    "microsoft word": "WINWORD.EXE",
+    "excel": "EXCEL.EXE",
+    "microsoft excel": "EXCEL.EXE",
+    "powerpoint": "POWERPNT.EXE",
+    "microsoft powerpoint": "POWERPNT.EXE",
+    "chrome": "chrome.exe",
+    "google chrome": "chrome.exe",
+    "edge": "msedge.exe",
+    "microsoft edge": "msedge.exe",
 }
-
-CHROME_CANDIDATES = (
-    r"***REMOVED***",
-    r"***REMOVED***",
-)
 
 BROWSER_NAMES = ("browser", "navegador", "default browser", "the default browser", "navegador por defecto")
 
@@ -252,16 +251,34 @@ def _focus_or_maximize_browser(exe_path: str) -> bool:
     return True
 
 
+def _resolve_exe(app: str) -> str | None:
+    """Resolve an executable via PATH or the Windows App Paths registry."""
+    path = shutil.which(app)
+    if path:
+        return path
+    try:
+        import winreg
+    except ImportError:
+        return None
+    for key_name in (app, app + ".exe"):
+        for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+            try:
+                with winreg.OpenKey(
+                    root, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\" + key_name
+                ) as key:
+                    value, _ = winreg.QueryValueEx(key, "")
+            except OSError:
+                continue
+            if value and os.path.isfile(value):
+                return value
+    return None
+
+
 def _open_browser(name: str, bus, preferred: str | None = None) -> bool:
     """Open the default browser, focusing an existing window or launching one."""
     exe = preferred if preferred and os.path.isfile(preferred) else None
     if not exe:
         exe = _default_browser_exe()
-    if not exe:
-        for candidate in CHROME_CANDIDATES:
-            if os.path.isfile(candidate):
-                exe = candidate
-                break
     if exe:
         if _focus_or_maximize_browser(exe):
             bus.emit("speak", resp("browser_already_open"))
@@ -285,28 +302,18 @@ def _open_app(text: str, bus):
     if name in BROWSER_NAMES and _open_browser(name, bus):
         return
 
-    if name in ("chrome", "google chrome"):
-        chrome = next((c for c in CHROME_CANDIDATES if os.path.isfile(c)), None)
-        if _open_browser(name, bus, preferred=chrome):
-            return
+    if name in ("chrome", "google chrome") and _open_browser(name, bus, preferred=_resolve_exe("chrome.exe")):
+        return
 
     if name in APPS_URL:
         _open_url(name, APPS_URL[name], bus)
         return
 
     if name in APPS:
-        cmd = APPS[name]
-        which = shutil.which(cmd)
-        if which:
-            _launch(name, which, bus)
+        exe = _resolve_exe(APPS[name])
+        if exe:
+            _launch(name, exe, bus)
             return
-        if os.path.isfile(cmd):
-            _launch(name, cmd, bus)
-            return
-
-    if name in APPS_PATH and os.path.isfile(APPS_PATH[name]):
-        _launch(name, APPS_PATH[name], bus)
-        return
 
     if name in _user_apps["urls"]:
         _open_url(name, _user_apps["urls"][name], bus)
@@ -321,9 +328,9 @@ def _open_app(text: str, bus):
             _launch(name, cmd, bus)
             return
 
-    which = shutil.which(name)
-    if which:
-        _launch(name, which, bus)
+    exe = _resolve_exe(APPS_EXE.get(name, name))
+    if exe:
+        _launch(name, exe, bus)
         return
 
     bus.emit("speak", resp("open_fail", name=name))

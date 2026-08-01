@@ -9,16 +9,21 @@ from core.language import resp
 
 
 def _find_code_exe():
-    code_path = shutil.which("code")
-    if code_path:
-        return code_path
-    for p in [
-        os.path.expandvars(r"***REMOVED***"),
-        r"***REMOVED***",
-        r"***REMOVED***",
-    ]:
-        if os.path.isfile(p):
-            return p
+    path = shutil.which("code")
+    if path:
+        return path
+    try:
+        import winreg
+    except ImportError:
+        return None
+    for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(root, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Code.exe") as key:
+                value, _ = winreg.QueryValueEx(key, "")
+        except OSError:
+            continue
+        if value and os.path.isfile(value):
+            return value
     return None
 
 
