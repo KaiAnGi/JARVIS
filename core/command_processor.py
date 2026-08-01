@@ -20,3 +20,21 @@ def process_unmatched(text: str, router, bus) -> bool:
     except Exception:
         bus.emit("speak", resp("no_match"))
         return False
+
+
+def route_with_fallback(text: str, router, bus) -> bool:
+    """Route a command end to end.
+
+    Order: keyword routing → browser YouTube follow-up → Ollama fuzzy fallback.
+    Returns True if any stage handled the command.
+    """
+    if router.route(text, bus):
+        return True
+
+    browser = router.get_plugin("browser")
+    if browser is not None and getattr(browser, "is_waiting_youtube", None) and browser.is_waiting_youtube():
+        browser.handle("youtube_search", text, bus)
+        return True
+
+    bus.emit("speak", resp("processing"))
+    return process_unmatched(text, router, bus)

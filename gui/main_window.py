@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
 
 import core.database as db
 import core.logger as logger
-from core.command_processor import process_unmatched
+from core.command_processor import route_with_fallback
 from core.language import is_goodbye, resp, toggle_lang, ui
 from gui.styles import (
     BUTTON_STYLE,
@@ -77,19 +77,7 @@ class RouteTask(QRunnable):
         t0 = time.time()
         handled = False
         try:
-            handled = self._router.route(self._text, self._bus)
-            if not handled:
-                browser = self._router.get_plugin("browser")
-                if (
-                    browser is not None
-                    and getattr(browser, "is_waiting_youtube", None)
-                    and browser.is_waiting_youtube()
-                ):
-                    browser.handle("youtube_search", self._text, self._bus)
-                    handled = True
-                else:
-                    self._bus.emit("speak", resp("processing"))
-                    handled = process_unmatched(self._text, self._router, self._bus)
+            handled = route_with_fallback(self._text, self._router, self._bus)
         except Exception:
             logger.log_error("Router", traceback.format_exc())
             self._bus.emit("speak", resp("error"))
@@ -306,11 +294,15 @@ class JarvisWindow(QMainWindow):
         self._log("JARVIS", text)
 
     def _on_language_changed(self, lang):
+        self._apply_language_change(lang)
+
+    def _apply_language_change(self, lang: str):
         self.recognizer.switch_language()
         self.speaker.switch_language()
         self.router.rebuild_patterns()
         self._refresh_ui()
-        self._log("SYSTEM", f"{'Idioma: Español' if lang == 'es' else 'Language: English'}")
+        label = "Idioma: Español" if lang == "es" else "Language: English"
+        self._log("SYSTEM", label)
 
     def _log(self, sender: str, text: str):
         color = PRIMARY_COLOR if sender == "JARVIS" else SECONDARY_COLOR
@@ -320,12 +312,7 @@ class JarvisWindow(QMainWindow):
         logger.log_event(sender, text)
 
     def _toggle_language(self):
-        new_lang = toggle_lang()
-        self.recognizer.switch_language()
-        self.speaker.switch_language()
-        self.router.rebuild_patterns()
-        self._refresh_ui()
-        self._log("SYSTEM", f"{'Idioma: Español' if new_lang == 'es' else 'Language: English'}")
+        self._apply_language_change(toggle_lang())
 
     def _refresh_ui(self):
         self.setWindowTitle(ui("window_title"))
