@@ -28,8 +28,7 @@ def handle(action: str, text: str, bus):
         try:
             ts = time.strftime("%Y%m%d_%H%M%S")
             path = SCREENSHOT_DIR / f"region_{ts}.png"
-            region = pyautogui.region_grabber((0, 0, 800, 600))
-            region.save(str(path))
+            pyautogui.screenshot(str(path), region=(0, 0, 800, 600))
             bus.emit("speak", resp("screenshot_saved", path=str(path)))
         except Exception:
             bus.emit("speak", resp("screenshot_error"))

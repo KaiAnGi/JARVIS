@@ -102,7 +102,7 @@ def _lang_name_to_code(name: str) -> str:
         "chinese": "zh",
         "chino": "zh",
         "zh": "zh",
-        "russian": "ruso",
+        "russian": "ru",
         "ru": "ru",
         "arabic": "ar",
         "árabe": "ar",

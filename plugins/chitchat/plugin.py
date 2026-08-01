@@ -6,10 +6,6 @@ from datetime import datetime
 from core.language import get_lang
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     lang = get_lang()
     hour = datetime.now().hour
@@ -85,7 +81,7 @@ def _how_are_you(lang: str) -> str:
     if lang == "es":
         options = [
             "Funcionando al 100%. ¿Y tú?",
-            "Todo perfecto,列表o para ayudarte.",
+            "Todo perfecto, listo para ayudarte.",
             "Excelente, gracias por preguntar. ¿Qué necesitas?",
             "Operativo y listo. ¿En qué te ayudo?",
             "Como una máquina bien aceitada. ¿Qué necesitas?",

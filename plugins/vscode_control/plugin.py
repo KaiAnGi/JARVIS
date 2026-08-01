@@ -8,10 +8,6 @@ from pathlib import Path
 from core.language import resp
 
 
-def init(bus):
-    pass
-
-
 def _find_code_exe():
     code_path = shutil.which("code")
     if code_path:
@@ -27,19 +23,15 @@ def _find_code_exe():
 
 
 def _run_code(*args, bus, msg_key="vscode_opened", **msg_kwargs):
+    exe = _find_code_exe()
+    if not exe:
+        bus.emit("speak", resp("vscode_not_found"))
+        return
     try:
-        subprocess.Popen(["code", *list(args)])
+        subprocess.Popen([exe, *list(args)])
         bus.emit("speak", resp(msg_key, **msg_kwargs) if msg_kwargs else resp(msg_key))
-    except FileNotFoundError:
-        exe = _find_code_exe()
-        if exe:
-            try:
-                subprocess.Popen([exe, *list(args)])
-                bus.emit("speak", resp(msg_key, **msg_kwargs) if msg_kwargs else resp(msg_key))
-            except Exception:
-                bus.emit("speak", resp("vscode_not_found"))
-        else:
-            bus.emit("speak", resp("vscode_not_found"))
+    except Exception:
+        bus.emit("speak", resp("vscode_not_found"))
 
 
 def handle(action: str, text: str, bus):
