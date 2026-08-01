@@ -21,20 +21,22 @@ WAKE_LANG = "en"
 WAKE_GRAMMAR = '["hey jarvis", "jarvis", "hey", "jar"]'
 INPUT_GAIN = 8.0
 
-WAKE_VARIANTS = frozenset({
-    "jarvis",
-    "javis",
-    "yarvis",
-    "harvis",
-    "jarviz",
-    "yarvez",
-    "jarbis",
-    "yarbis",
-    "jerbis",
-    "gerbis",
-    "yervis",
-    "jervis",
-})
+WAKE_VARIANTS = frozenset(
+    {
+        "jarvis",
+        "javis",
+        "yarvis",
+        "harvis",
+        "jarviz",
+        "yarvez",
+        "jarbis",
+        "yarbis",
+        "jerbis",
+        "gerbis",
+        "yervis",
+        "jervis",
+    }
+)
 
 WAKE_PREFIXES = (
     "jarvi",
@@ -124,7 +126,4 @@ class WakeWordDetector:
             return False
         if "jarvis" in t.replace(" ", ""):
             return True
-        return any(
-            word in WAKE_VARIANTS or word.startswith(WAKE_PREFIXES)
-            for word in t.split()
-        )
+        return any(word in WAKE_VARIANTS or word.startswith(WAKE_PREFIXES) for word in t.split())
