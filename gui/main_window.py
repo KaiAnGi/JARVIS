@@ -166,6 +166,7 @@ class JarvisWindow(QMainWindow):
         self.voice_thread = None
         self._listen_thread = None
         self._session_id = 0
+        self._session_active = False
 
         db.init()
         logger.log_event("SYSTEM", "J.A.R.V.I.S. started")
@@ -359,6 +360,8 @@ class JarvisWindow(QMainWindow):
     def _on_manual_listen(self):
         if self._listen_thread is not None and self._listen_thread.isRunning():
             return
+        if self._session_active:
+            return
         self.arc_reactor.set_listening(True)
         self.status_stt.set_active(True)
         self._log("SYSTEM", ui("listening"))
@@ -388,6 +391,7 @@ class JarvisWindow(QMainWindow):
         self.status_wake.set_active(True)
 
     def _on_session_start(self):
+        self._session_active = True
         self._session_id = int(time.time())
         logger.log_session_start()
         self.showNormal()
@@ -403,6 +407,7 @@ class JarvisWindow(QMainWindow):
             browser.reset_state()
 
     def _on_session_end(self):
+        self._session_active = False
         self.arc_reactor.set_listening(False)
         self.status_stt.set_active(False)
         self.status_wake.set_active(True)

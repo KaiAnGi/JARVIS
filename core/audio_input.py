@@ -1,4 +1,4 @@
-"""Core audio input - Offline STT via Vosk with noise reduction."""
+"""Core audio input - Offline STT via Vosk."""
 
 import json
 import threading
@@ -8,17 +8,10 @@ import numpy as np
 import pyaudio
 from vosk import KaldiRecognizer, Model
 
+from core.audio_device import pick_input_device
 from core.language import MODELS, get_lang
 
-try:
-    import noisereduce as nr
-
-    _HAS_NR = True
-except ImportError:
-    _HAS_NR = False
-
-ENERGY_THRESHOLD = 500  # Minimum RMS energy to detect speech
-PROP_DECREASE = 0.8  # Noise reduction strength (0=no reduction, 1=full)
+INPUT_GAIN = 8.0
 
 
 class ModelNotFoundError(Exception):
@@ -32,7 +25,6 @@ class SpeechRecognizer:
 
     def __init__(self, model_name: str = None, sample_rate: int = 16000):
         self.sample_rate = sample_rate
-        self._nr = nr if _HAS_NR else None
         self._models = {}
         self._current_lang = get_lang()
         self._models[self._current_lang] = self._load_model(model_name or MODELS[self._current_lang])
@@ -134,6 +126,7 @@ class SpeechRecognizer:
                 channels=1,
                 rate=self.sample_rate,
                 input=True,
+                input_device_index=pick_input_device(),
                 frames_per_buffer=4096,
             )
             self.model = self._get_model()
@@ -141,12 +134,8 @@ class SpeechRecognizer:
 
     def _is_speech(self, data: bytes) -> bool:
         """Check if audio chunk contains speech using noise reduction."""
-        if not self._nr:
-            return True
-        audio = np.frombuffer(data, dtype=np.int16).astype(np.float32)
-        reduced = nr.reduce_noise(y=audio, sr=self.sample_rate, prop_decrease=PROP_DECREASE)
-        energy = np.sqrt(np.mean(reduced**2))
-        return energy > ENERGY_THRESHOLD
+        audio = np.frombuffer(data, dtype=np.int16)
+        return float(np.max(np.abs(audio))) > 50
 
     def _listen_once(self, detect_lang: bool) -> tuple[str, str]:
         """Block until a complete utterance is recognized.
@@ -165,6 +154,8 @@ class SpeechRecognizer:
                 data = self._stream.read(4096, exception_on_overflow=False)
             except Exception:
                 return "", ""
+            audio = np.frombuffer(data, dtype=np.int16).astype(np.float32) * INPUT_GAIN
+            data = np.clip(audio, -32768, 32767).astype(np.int16).tobytes()
             if not self._is_speech(data):
                 continue
             with self._lock:
