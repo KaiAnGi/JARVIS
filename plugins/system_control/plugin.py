@@ -37,10 +37,6 @@ APPS = {
 }
 
 APPS_PATH = {
-    "chrome": r"***REMOVED***",
-    "google chrome": r"***REMOVED***",
-    "browser": r"***REMOVED***",
-    "navegador": r"***REMOVED***",
     "word": r"***REMOVED***",
     "microsoft word": r"***REMOVED***",
     "excel": r"***REMOVED***",
@@ -49,12 +45,12 @@ APPS_PATH = {
     "microsoft powerpoint": r"***REMOVED***",
 }
 
-BROWSER_CANDIDATES = (
+CHROME_CANDIDATES = (
     r"***REMOVED***",
     r"***REMOVED***",
 )
 
-BROWSER_NAMES = ("browser", "navegador", "chrome", "google chrome")
+BROWSER_NAMES = ("browser", "navegador", "default browser", "the default browser", "navegador por defecto")
 
 APPS_URL = {
     "whatsapp": "https://web.whatsapp.com",
@@ -173,11 +169,104 @@ def _open_url(name: str, url: str, bus) -> bool:
     return True
 
 
-def _open_browser(name: str, bus) -> bool:
-    """Open the browser, trying known Chrome paths then the OS default."""
-    for candidate in BROWSER_CANDIDATES:
-        if os.path.isfile(candidate):
-            return _launch(name, candidate, bus)
+def _parse_exe_from_command(command: str) -> str | None:
+    """Extract the executable path from a registry shell command."""
+    command = command.strip()
+    if command.startswith('"'):
+        end = command.find('"', 1)
+        if end != -1:
+            return command[1:end] or None
+    exe = command.split(" ", 1)[0].strip()
+    return exe or None
+
+
+def _default_browser_exe() -> str | None:
+    """Resolve the system default browser executable via the registry."""
+    try:
+        import winreg
+    except ImportError:
+        return None
+    try:
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice",
+        ) as key:
+            progid, _ = winreg.QueryValueEx(key, "ProgId")
+    except OSError:
+        return None
+    for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(root, rf"Software\Classes\{progid}\shell\open\command") as key:
+                command, _ = winreg.QueryValueEx(key, "")
+        except OSError:
+            continue
+        exe = _parse_exe_from_command(command)
+        if exe and os.path.isfile(exe):
+            return exe
+    return None
+
+
+def _focus_or_maximize_browser(exe_path: str) -> bool:
+    """Bring an already-running browser window to the front and maximize it."""
+    try:
+        import win32api
+        import win32con
+        import win32gui
+        import win32process
+    except ImportError:
+        return False
+
+    target = os.path.basename(exe_path).lower()
+    found = []
+
+    def _enum_windows(hwnd, _):
+        if not win32gui.IsWindowVisible(hwnd):
+            return
+        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        try:
+            handle = win32api.OpenProcess(
+                win32con.PROCESS_QUERY_LIMITED_INFORMATION | win32con.PROCESS_VM_READ,
+                False,
+                pid,
+            )
+        except Exception:
+            return
+        try:
+            image = win32process.GetModuleFileNameEx(handle)
+        except Exception:
+            image = ""
+        finally:
+            win32api.CloseHandle(handle)
+        if image and os.path.basename(image).lower() == target:
+            found.append(hwnd)
+
+    win32gui.EnumWindows(_enum_windows, None)
+    if not found:
+        return False
+
+    hwnd = found[0]
+    if win32gui.IsIconic(hwnd):
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+    win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+    win32gui.SetForegroundWindow(hwnd)
+    return True
+
+
+def _open_browser(name: str, bus, preferred: str | None = None) -> bool:
+    """Open the default browser, focusing an existing window or launching one."""
+    exe = preferred if preferred and os.path.isfile(preferred) else None
+    if not exe:
+        exe = _default_browser_exe()
+    if not exe:
+        for candidate in CHROME_CANDIDATES:
+            if os.path.isfile(candidate):
+                exe = candidate
+                break
+    if exe:
+        if _focus_or_maximize_browser(exe):
+            bus.emit("speak", resp("browser_already_open"))
+            return True
+        return _launch(name, exe, bus)
     import webbrowser
 
     webbrowser.open("https://www.google.com")
@@ -195,6 +284,11 @@ def _open_app(text: str, bus):
 
     if name in BROWSER_NAMES and _open_browser(name, bus):
         return
+
+    if name in ("chrome", "google chrome"):
+        chrome = next((c for c in CHROME_CANDIDATES if os.path.isfile(c)), None)
+        if _open_browser(name, bus, preferred=chrome):
+            return
 
     if name in APPS_URL:
         _open_url(name, APPS_URL[name], bus)
