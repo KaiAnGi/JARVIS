@@ -49,6 +49,13 @@ APPS_PATH = {
     "microsoft powerpoint": r"***REMOVED***",
 }
 
+BROWSER_CANDIDATES = (
+    r"***REMOVED***",
+    r"***REMOVED***",
+)
+
+BROWSER_NAMES = ("browser", "navegador", "chrome", "google chrome")
+
 APPS_URL = {
     "whatsapp": "https://web.whatsapp.com",
     "whatsapp web": "https://web.whatsapp.com",
@@ -166,6 +173,18 @@ def _open_url(name: str, url: str, bus) -> bool:
     return True
 
 
+def _open_browser(name: str, bus) -> bool:
+    """Open the browser, trying known Chrome paths then the OS default."""
+    for candidate in BROWSER_CANDIDATES:
+        if os.path.isfile(candidate):
+            return _launch(name, candidate, bus)
+    import webbrowser
+
+    webbrowser.open("https://www.google.com")
+    bus.emit("speak", resp("open_app", name=name))
+    return True
+
+
 def _open_app(text: str, bus):
     name = _clean_app_name(text)
     if not name:
@@ -173,6 +192,9 @@ def _open_app(text: str, bus):
         return
 
     name = _resolve_name(name)
+
+    if name in BROWSER_NAMES and _open_browser(name, bus):
+        return
 
     if name in APPS_URL:
         _open_url(name, APPS_URL[name], bus)
