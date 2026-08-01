@@ -564,9 +564,8 @@ Then say "abre myapp" or "open myapp". See `config/user_apps.json.example` for a
 |-----------|------------|
 | **STT** | [Vosk](https://alphacephei.com/vosk/) (offline, multilingual) |
 | **TTS** | Windows SAPI5 (Helena ES / Zira EN) |
-| **Wake Word** | [openWakeWord](https://github.com/dscripka/openWakeWord) (ONNX) |
+| **Wake Word** | [Vosk](https://alphacephei.com/vosk/) (EN streaming + grammar) |
 | **LLM** | [Ollama](https://ollama.com/) (optional, for fuzzy intent) |
-| **Noise Reduction** | [noisereduce](https://github.com/timsainb/noisereduce) |
 | **GUI** | PyQt6 + Custom HUD Theme |
 | **System Tray** | pystray |
 | **OAuth** | Google APIs (Gmail, Calendar) |

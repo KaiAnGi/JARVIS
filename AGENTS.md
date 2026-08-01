@@ -3,7 +3,7 @@
 Guía para agentes que trabajan en este repositorio.
 
 ## Proyecto
-Asistente de voz por voz J.A.R.V.I.S. (LocalVoiceAssistant). Stack: Python 3.13, PyQt6 (GUI), openwakeword + Vosk (STT), pyttsx3 (TTS), Ollama (fallback de intención fuzzy), SQLite (historial).
+Asistente de voz por voz J.A.R.V.I.S. (LocalVoiceAssistant). Stack: Python 3.13, PyQt6 (GUI), Vosk (wake word + STT), pyttsx3 (TTS), Ollama (fallback de intención fuzzy), SQLite (historial).
 
 ## Comandos de verificación
 Todos se ejecutan con el intérprete del venv:

@@ -5,12 +5,10 @@
 # Runtime
 python-dotenv>=1.2.2
 numpy>=2.4.6
-noisereduce>=3.0.3
 
 # Audio
 vosk==0.3.45
 pyaudio==0.2.14
-openwakeword==0.6.0
 
 # GUI
 PyQt6==6.11.0
