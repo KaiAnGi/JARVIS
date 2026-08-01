@@ -3,10 +3,6 @@
 from core.language import get_lang, resp, toggle_lang
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     if action == "toggle_language":
         new_lang = toggle_lang()

@@ -77,10 +77,6 @@ def _format_date(date_str: str) -> str:
         return date_str
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     try:
         _handle(action, text, bus)

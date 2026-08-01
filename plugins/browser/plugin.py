@@ -15,10 +15,6 @@ _yt_lock = threading.Lock()
 _YOUTUBE_TIMEOUT = 30.0
 
 
-def init(bus):
-    pass
-
-
 def reset_state():
     """Reset plugin state. Call on new session."""
     global _waiting_youtube, _waiting_youtube_ts

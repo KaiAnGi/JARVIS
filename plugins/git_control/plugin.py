@@ -12,10 +12,6 @@ REPO_PATH = Path.cwd()
 _pending_confirm = None
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     global _pending_confirm
 

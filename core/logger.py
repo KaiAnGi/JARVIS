@@ -121,8 +121,3 @@ def get_available_log_dates() -> list[str]:
             if date_part and date_part[0].isdigit():
                 dates.append(date_part)
     return dates
-
-
-def cleanup_old_logs(days: int = 30):
-    """Delete log files older than N days. Handled automatically by TimedRotatingFileHandler."""
-    pass

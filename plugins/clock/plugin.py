@@ -28,10 +28,6 @@ _ACTIONS = {
 }
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     handler = _ACTIONS.get(action)
     if handler:

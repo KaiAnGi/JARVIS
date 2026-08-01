@@ -13,10 +13,6 @@ pyautogui.FAILSAFE = True
 BROWSERS = ["chrome", "edge", "brave", "opera", "mozilla firefox"]
 
 
-def init(bus):
-    pass
-
-
 def _is_browser_active() -> bool:
     win = gw.getActiveWindow()
     if not win:

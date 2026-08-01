@@ -93,10 +93,6 @@ _MONTHS_ES = {
 }
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     if action == "get_time":
         now = datetime.now().strftime("%I:%M %p")

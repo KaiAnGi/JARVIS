@@ -38,10 +38,6 @@ def _get_service():
     return _service
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     try:
         _handle(action, text, bus)

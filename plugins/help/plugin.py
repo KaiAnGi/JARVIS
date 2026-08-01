@@ -37,10 +37,6 @@ CATEGORIES_EN = {
 }
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     if action == "help":
         categories = CATEGORIES_ES if get_lang() == "es" else CATEGORIES_EN

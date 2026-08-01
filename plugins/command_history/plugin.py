@@ -4,10 +4,6 @@ from core.database import get_command_history
 from core.language import resp
 
 
-def init(bus):
-    pass
-
-
 def handle(action: str, text: str, bus):
     if action == "last_command":
         commands = get_command_history(limit=1)
