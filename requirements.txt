@@ -3,7 +3,7 @@
 -r requirements-test.txt
 
 # Runtime
-python-dotenv>=1.2.2
+python-dotenv>=1.2.4
 numpy>=2.4.6
 
 # Audio
