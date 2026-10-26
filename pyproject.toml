@@ -19,7 +19,7 @@ audio = [
 gui = [
     "PyQt6==6.11.0",
     "pystray==0.19.5",
-    "Pillow==12.3.0",
+    "Pillow==13.0.0",
 ]
 win = [
     "pywin32==312",
